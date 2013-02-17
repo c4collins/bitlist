@@ -1,0 +1,42 @@
+{% extends "footer.html" %}
+
+{% block content_container %}
+<!-- Main hero unit for a primary marketing message or call to action -->
+    <div class="hero-unit">
+        <form action="/post/edit" method="post">
+            <div>
+                <ul>
+                    <li>
+                        <label for="title">Listing Title</label>
+                        <input type="text" name="title" placeholder="Listing Title" required>
+                    </li>
+                    <li>
+                        <label for="category">Listing Category</label>
+                        <select name="category" required>
+                            <option value="">Please Choose One</option>  
+                            {% for category in categories %}
+                                <option value="{{ category.ID }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </li>
+                    <li>
+                        <label for="location">Location</label>
+                        <input type="text" name="location" default="Digital">
+                    </li>
+                    <li>
+                        <label for="price">Price (In BTC)</label>
+                        <input type="number" name="price" min="0" max="100" step="any" default="10" required>
+                    </li>
+                    <li>
+                        <label for="content">Listing Details</label>
+                        <textarea name="content" rows="10" cols="240" required></textarea>
+                    </li>
+                    <li>
+                        <input type="submit" value="Post Listing" class="btn btn-primary btn-large">
+                    </li>
+                </ul>
+            </div>
+        </form>
+    </div>
+
+{% endblock content_container %}

@@ -1,0 +1,19 @@
+{% extends "footer.html" %}
+
+{% block content_container %}
+<!-- Main hero unit for a primary marketing message or call to action -->
+    <div class="hero-unit">
+        <h1> {{ postID }} </h1>
+        {% for listing in listings %}
+            <h2>{{ listing.postID }}</h2>
+            <b><a href="/post?postID={{ listing.postID }}">{{ listing.title }}</a></b>
+            {% if listing.content %}
+                <p>{{ listing.content }}</p>
+            {% else %}
+                <b>The post you have requested does not currently exist.</b>
+            {% endif %}
+            <p>{{ listing.engage }}</p>
+            <blockquote>{{ listing.price }}</blockquote>
+        {% endfor %}
+
+{% endblock content_container %}
