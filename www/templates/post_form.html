@@ -1,7 +1,6 @@
 {% extends "footer.html" %}
 
 {% block content_container %}
-<!-- Main hero unit for a primary marketing message or call to action -->
     <div class="hero-unit">
         <form action="/post/edit" method="post">
             <div>
@@ -25,7 +24,7 @@
                     </li>
                     <li>
                         <label for="price">Price (In BTC)</label>
-                        <input type="number" name="price" min="0" max="100" step="any" default="10" required>
+                        <input type="number" name="price" min="0" max="100" step="0.00000001" default="10" required>
                     </li>
                     <li>
                         <label for="content">Listing Details</label>

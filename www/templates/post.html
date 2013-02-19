@@ -1,7 +1,6 @@
 {% extends "footer.html" %}
 
 {% block content_container %}
-<!-- Main hero unit for a primary marketing message or call to action -->
     <div class="hero-unit">
         <h1> {{ postID }} </h1>
         {% for listing in listings %}
@@ -9,6 +8,7 @@
             <b><a href="/post?postID={{ listing.postID }}">{{ listing.title }}</a></b>
             {% if listing.content %}
                 <p>{{ listing.content }}</p>
+                <p>{{ listing.traderID }}</p>
             {% else %}
                 <b>The post you have requested does not currently exist.</b>
             {% endif %}

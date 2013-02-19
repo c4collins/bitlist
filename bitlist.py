@@ -18,13 +18,9 @@ providers = {
     #'MyOpenID' : 'myopenid.com'
 }
 
-##
-# MainPage & Associated Categories
-# The MainPage is to serve as basically just a listing of categories, and then maybe soem featured posts
-# Other Category classes are to serve as drill-down tools, and may not even exist.
-##
 
 def get_login_link_list(page_self, user):
+    """Helper function to provide the proper login/logout links"""
     if user:
         link = {}
         link['url'] = users.create_logout_url(page_self.request.uri)
@@ -37,10 +33,18 @@ def get_login_link_list(page_self, user):
             link['url'] = users.create_login_url(federated_identity=uri)
             link['name'] = name
             link_list.append(link)
+
     return link_list
 
 
 
+
+
+##
+# MainPage & Associated Categories
+# The MainPage is to serve as basically just a listing of categories, and then maybe soem featured posts
+# Other Category classes are to serve as drill-down tools, and may not even exist.
+##
 
 class MainPage(webapp2.RequestHandler):
     
@@ -48,12 +52,10 @@ class MainPage(webapp2.RequestHandler):
         user = users.get_current_user()
 
         listings_query = Post.all().order('-engage')
-        listings = listings_query.fetch(10)
-        link_list = get_login_link_list(self, user)
-        
+        listings = listings_query.fetch(10)        
 
         template_values = {
-            'link_list': link_list,
+            'link_list': get_login_link_list(self, user),
             'listings': listings,
         }
 
@@ -72,14 +74,13 @@ class PostForm(webapp2.RequestHandler):
         
         user = users.get_current_user()
         if_user = True if user else False
-        link_list = get_login_link_list(self, user)
 
         categories = [{ "name" : "Digital Goods"  , "ID" : "digital" },
                       { "name" : "Real-Life Items", "ID" : "ephemeral"}]
       
 
         template_values = {
-            'link_list': link_list,
+            'link_list': get_login_link_list(self, user),
             'categories': categories,
             'if_user': if_user,
         }
@@ -127,11 +128,10 @@ class PostView(webapp2.RequestHandler):
                                 postID )
 
         user = users.get_current_user()
-        link_list = get_login_link_list(self, user)
         
 
         template_values = {
-            'link_list': link_list,
+            'link_list': get_login_link_list(self, user),
             'listings': listings,
             'postID' : postID,
         }
@@ -152,9 +152,14 @@ class TraderView(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
 
-        category = self.request.get('category')
-        categories = {"digital_goods" : "Digital Goods", 
-                       "actual_merch" : "Real-Life Items"}
+        
+
+        template_values = {
+            'link_list': get_login_link_list(self, user),
+            'category' : self.request.get('category'),
+            'categories' : {"digital_goods" : "Digital Goods", 
+                           "actual_merch" : "Real-Life Items"},
+        }
         
         if user:
             if user.federated_identity():
@@ -162,45 +167,13 @@ class TraderView(webapp2.RequestHandler):
             else:
                 trader = Trader( parent=trader_key( user.user_id() ) )
 
-            self.response.out.write("""
-              <!DOCTYPE html>
-              <html>
-                <body>
-                  <form action="/trader?%s" method="post">
-                    <div><h1>""")
-            if trader.name:
-                self.response.out.write(trader.name)
-            if trader.realEmail:
-                self.response.out.write(trader.realEmail)
-            self.response.out.write("""</h1>
-                    <ul>
-                        <li>
-                            <label for="name">Name</label>
-                            <input type="text" name="name" placeholder="%s" required>
-                        </li>
-                        <li>
-                            <label for="email">Email Address</label>
-                            <input type="email" name="email" placeholder="%s" required>
-                        </li>
-                        <li>
-                            <input type="submit" value="Save Information">
-                        </li>
-                    </ul>
-                    </div>
-                  </form>
-                </body>
-              </html>""" % ( user.nickname() , user.email() )
-              )
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/trader.html' )
         else:
-            self.response.out.write("""
-                <html>
-                <body>
-                  <div>You must log in to use this function.  Sign in at: """)
-             
-            for name, uri in providers.items():
-                self.response.out.write('[<a href="%s">%s</a>]' % (
-                    users.create_login_url(federated_identity=uri), name))
-                self.response.out.write("""</div></body></html>""")
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
+        
+
+        self.response.out.write( template.render( path, template_values ))
+
 
     def post(self):
         user = users.get_current_user()

@@ -1,0 +1,21 @@
+{% extends "footer.html" %}
+
+{% block content_container %}
+    <div class="hero-unit">
+        <form action="/trader?trader={{ trader.traderID }}" method="post">
+            <div>
+                <ul>
+                    <li>
+                        <input type="submit" value="Post Listing" class="btn btn-primary btn-large">
+                    </li>
+                </ul>
+            </div>
+        </form>
+    </div>
+
+
+
+
+
+
+{% endblock content_container %}
