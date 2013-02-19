@@ -36,7 +36,13 @@ def get_login_link_list(page_self, user):
 
     return link_list
 
-
+def get_trader_posts(user):
+    trader_post_query = db.GqlQuery("SELECT * "
+                                 "FROM Post "
+                                 "WHERE traderID = :1 "
+                                 "ORDER BY engage DESC ",
+                                 user.user_id() )
+    return trader_post_query
 
 
 
@@ -51,12 +57,11 @@ class MainPage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
 
-        listings_query = Post.all().order('-engage')
-        listings = listings_query.fetch(10)        
+        listings_query = Post.all().order('-engage')       
 
         template_values = {
             'link_list': get_login_link_list(self, user),
-            'listings': listings,
+            'listings': listings_query,
         }
 
         path = os.path.join( os.path.dirname(__file__), 'www/templates/main.html' )
@@ -71,31 +76,32 @@ class MainPage(webapp2.RequestHandler):
 
 class PostForm(webapp2.RequestHandler):
     def get(self):
-        
         user = users.get_current_user()
-        if_user = True if user else False
 
-        categories = [{ "name" : "Digital Goods"  , "ID" : "digital" },
-                      { "name" : "Real-Life Items", "ID" : "ephemeral"}]
-      
-
-        template_values = {
-            'link_list': get_login_link_list(self, user),
-            'categories': categories,
-            'if_user': if_user,
-        }
-
-        path = os.path.join( os.path.dirname(__file__), 'www/templates/post_form.html' )
-        self.response.out.write( template.render( path, template_values ))
-
+        if user:
+            categories = [{ "name" : "Digital Goods"  , "ID" : "digital" },
+                          { "name" : "Real-Life Items", "ID" : "ephemeral"}]
+            template_values = {
+                'link_list': get_login_link_list(self, user),
+                'categories': categories,
+                'if_user': True,
+            }
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/post_form.html' )
+            self.response.out.write( template.render( path, template_values ))
+        else:
+            template_values = {
+                'link_list': get_login_link_list(self, user),
+            }
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
+            self.response.out.write( template.render( path, template_values ))
+        
 
     def post(self):
         postID = self.request.get('postID')
         post = Post(parent=post_key(postID))
         user = users.get_current_user()
         
-        if user:
-            post.traderID = trader_key(user.email())
+        post.traderID = str(user.user_id())
         
         post.title = self.request.get('title')
         post.location = self.request.get('location')
@@ -152,21 +158,17 @@ class TraderView(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
 
-        
-
         template_values = {
-            'link_list': get_login_link_list(self, user),
-            'category' : self.request.get('category'),
-            'categories' : {"digital_goods" : "Digital Goods", 
-                           "actual_merch" : "Real-Life Items"},
+            'link_list' : get_login_link_list(self, user),
+            'nickname' : user.nickname(),
+            'email' : user.email(), 
+            'user_id' : user.user_id(), 
+            'user_fid' : user.federated_identity(), 
+            'user_prov' : user.federated_provider(),
+            'trader_posts': get_trader_posts(user),
         }
-        
-        if user:
-            if user.federated_identity():
-                trader = Trader( parent=trader_key( user.federated_identity() ) )
-            else:
-                trader = Trader( parent=trader_key( user.user_id() ) )
 
+        if user:
             path = os.path.join( os.path.dirname(__file__), 'www/templates/trader.html' )
         else:
             path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
@@ -177,13 +179,13 @@ class TraderView(webapp2.RequestHandler):
 
     def post(self):
         user = users.get_current_user()
-        trader = Trader(parent=trader_key( user.email() ))
+        trader = Trader(parent=trader_key( user.user_id() ))
         
         trader.realEmail = self.request.get('email')
         trader.name = self.request.get('name')
         if user:
             if user.federated_identity():
-                trader.traderID = user.federated_identity()
+                trader.traderID = user.user_id()
             else:
                 trader.traderID = user.user_id()
 
@@ -198,19 +200,10 @@ class TraderView(webapp2.RequestHandler):
 # Data Models
 #
 ##
-class Trader(db.Model):
-    realEmail = db.EmailProperty()
-    name = db.StringProperty()
-
-def trader_key(realEmail=None):
-    """ Construct a Datastore key for the Trader from the realEmail.  
-        This will probably have to be changed to some OpenID token, but for now it is what it is.
-    """
-    return db.Key.from_path('Trader', realEmail or 'does_not_exist')
 
 class Post(db.Model):
     postID = db.StringProperty()
-    traderID = db.ReferenceProperty(Trader)
+    traderID = db.StringProperty()
     title = db.StringProperty()
     location = db.StringProperty()
     price = db.FloatProperty()

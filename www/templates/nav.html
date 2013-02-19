@@ -13,20 +13,23 @@
             <div class="nav-collapse collapse">
                 <ul class="nav">
                     <li class="active"><a href="/">Home</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="#">Action</a></li>
-                            <li><a href="#">Another action</a></li>
-                            <li><a href="#">Something else here</a></li>
-                            <li class="divider"></li>
-                            <li class="nav-header">Nav header</li>
-                            <li><a href="#">Separated link</a></li>
-                            <li><a href="#">One more separated link</a></li>
-                        </ul>
-                    </li>
+                    <li><a href="/post/edit">Make a Post</a></li>
+                    {% if link_list|length < 2 %}
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Account<b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/trader">Profile</a></li>
+                                <li><a href="/trader/listings">Recent Listings</a></li>
+                                {% if trader_posts %}
+                                    <li class="divider"></li>
+                                    <li class="nav-header">Recent Posts</li>
+                                    {% for post in trader_posts|slice:":5" %}
+                                        <li><a href="/post?postID={{ post.postID }}">{{ post.title }}</a></li>
+                                    {% endfor %}
+                                {% endif %}
+                            </ul>
+                        </li>
+                    {% endif %}
                 </ul>
                 <form class="navbar-form pull-right">
                     {% for link in link_list %}

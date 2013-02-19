@@ -15,3 +15,9 @@ indexes:
   - name: postID
   - name: engage
     direction: desc
+
+- kind: Post
+  properties:
+  - name: traderID
+  - name: engage
+    direction: desc

@@ -2,9 +2,16 @@
 
 {% block content_container %}
     <div class="hero-unit">
-        <form action="/trader?trader={{ trader.traderID }}" method="post">
+        <form action="/trader?trader={{ user_id }}" method="post">
             <div>
                 <ul>
+                    <li>
+                        <h1>{{ nickname }}</h1>
+                    </li>
+                    <li>
+                        <h6>{{ user_id }} from {{ user_fid }} via {{ user_prov }}</h6>
+                    </li>
+                    <hr/>
                     <li>
                         <input type="submit" value="Post Listing" class="btn btn-primary btn-large">
                     </li>
@@ -12,8 +19,14 @@
             </div>
         </form>
     </div>
-
-
+    <div>
+        <ul>
+            <li>Recent Posts</li>
+            {% for post in trader_posts %}
+            <li><a href="/post?postID={{ post.postID }}">{{ post.title }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
 
 
 
