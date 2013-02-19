@@ -1,8 +1,9 @@
 import webapp2, cgi, os, datetime, urllib, hashlib
 from google.appengine.api import users
-from google.appengine.ext import webapp, db
+from google.appengine.ext import webapp, ndb
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
+from google.appengine.datastore.datastore_query import Cursor
 
 
 ##
@@ -18,6 +19,11 @@ providers = {
     #'MyOpenID' : 'myopenid.com'
 }
 
+
+##
+# Helper Functions
+# These functions would otherwise be repeated in multiple classes.
+##
 
 def get_login_link_list(page_self, user):
     """Helper function to provide the proper login/logout links"""
@@ -36,13 +42,15 @@ def get_login_link_list(page_self, user):
 
     return link_list
 
-def get_trader_posts(user):
-    trader_post_query = db.GqlQuery("SELECT * "
-                                 "FROM Post "
-                                 "WHERE traderID = :1 "
-                                 "ORDER BY engage DESC ",
-                                 user.user_id() )
-    return trader_post_query
+def get_trader_posts(user, fetch=3):
+    if user:
+        user_id = user.user_id()
+        trader_post_query = Post.query(Post.traderID==user_id)
+        if slice:
+            trader_post_query = trader_post_query.fetch(fetch)
+        return trader_post_query
+    else:
+        return None
 
 
 
@@ -57,10 +65,11 @@ class MainPage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
 
-        listings_query = Post.all().order('-engage')       
+        listings_query = Post.query().order(-Post.engage)       
 
         template_values = {
             'link_list': get_login_link_list(self, user),
+            'trader_posts': get_trader_posts(user, 10),
             'listings': listings_query,
         }
 
@@ -83,8 +92,8 @@ class PostForm(webapp2.RequestHandler):
                           { "name" : "Real-Life Items", "ID" : "ephemeral"}]
             template_values = {
                 'link_list': get_login_link_list(self, user),
+                'trader_posts': get_trader_posts(user),
                 'categories': categories,
-                'if_user': True,
             }
             path = os.path.join( os.path.dirname(__file__), 'www/templates/post_form.html' )
             self.response.out.write( template.render( path, template_values ))
@@ -97,26 +106,25 @@ class PostForm(webapp2.RequestHandler):
         
 
     def post(self):
-        postID = self.request.get('postID')
-        post = Post(parent=post_key(postID))
         user = users.get_current_user()
-        
+        post = Post()
         post.traderID = str(user.user_id())
-        
         post.title = self.request.get('title')
         post.location = self.request.get('location')
         post.price = float(self.request.get('price'))
         post.content = self.request.get('content')
-
         post.category = self.request.get('category')
  
         contact = hashlib.md5()
-        contact.update( str( datetime.datetime.now() ) + post.title )
+        contact.update( str( datetime.datetime.now() ) + post.title + post.traderID )
         contact = contact.hexdigest()
         post.contact = contact + '@bitlist.appspot.com'
-        post.postID = contact
+        post.postID = ndb.Key(Post, contact).urlsafe()
+
 
         post.put()
+
+        
 
         self.redirect('/post?' + urllib.urlencode( {'postID' : post.postID } ) )
 
@@ -127,17 +135,14 @@ class PostView(webapp2.RequestHandler):
     def get(self):
         postID = self.request.get('postID')
 
-        listings = db.GqlQuery("SELECT * "
-                                "FROM Post "
-                                "WHERE postID = :1 "
-                                "ORDER BY engage DESC ",
-                                postID )
+        listings = Post.query(Post.postID==postID).order(-Post.engage)
 
         user = users.get_current_user()
         
 
         template_values = {
             'link_list': get_login_link_list(self, user),
+            'trader_posts': get_trader_posts(user),
             'listings': listings,
             'postID' : postID,
         }
@@ -158,42 +163,54 @@ class TraderView(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
 
-        template_values = {
+        if user:
+            template_values = {
             'link_list' : get_login_link_list(self, user),
+            'trader_posts': get_trader_posts(user, None),
             'nickname' : user.nickname(),
             'email' : user.email(), 
             'user_id' : user.user_id(), 
             'user_fid' : user.federated_identity(), 
             'user_prov' : user.federated_provider(),
-            'trader_posts': get_trader_posts(user),
         }
-
-        if user:
             path = os.path.join( os.path.dirname(__file__), 'www/templates/trader.html' )
         else:
+            template_values = {
+            'link_list' : get_login_link_list(self, user),
+            }
             path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
         
 
         self.response.out.write( template.render( path, template_values ))
 
 
-    def post(self):
+
+class TraderPostView(webapp2.RequestHandler):
+    def get(self):
         user = users.get_current_user()
-        trader = Trader(parent=trader_key( user.user_id() ))
-        
-        trader.realEmail = self.request.get('email')
-        trader.name = self.request.get('name')
+
         if user:
-            if user.federated_identity():
-                trader.traderID = user.user_id()
-            else:
-                trader.traderID = user.user_id()
+            user_id = user.user_id()
 
-        trader.put()
+            cursor = Cursor(urlsafe=self.request.get('cursor'))
+            posts, next_cursor, more = Post.query(Post.traderID==user_id).order(-Post.engage).fetch_page(10, start_cursor=cursor)
 
-        self.redirect('/trader?' + urllib.urlencode( {'trader' : str(trader.Key) } ) )
+            template_values = {
+                'link_list' : get_login_link_list(self, user),
+                'trader_posts': get_trader_posts(user, None),
+                'posts' : posts,
+                'next' : next_cursor.urlsafe(),
+                'more' : more,
+            }
 
-
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/trader_posts.html' )
+        else:
+            template_values = {
+                'link_list' : get_login_link_list(self, user),
+            }
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
+        
+        self.response.out.write( template.render( path, template_values ))
 
 
 ##
@@ -201,20 +218,20 @@ class TraderView(webapp2.RequestHandler):
 #
 ##
 
-class Post(db.Model):
-    postID = db.StringProperty()
-    traderID = db.StringProperty()
-    title = db.StringProperty()
-    location = db.StringProperty()
-    price = db.FloatProperty()
-    content = db.TextProperty()
-    engage = db.DateTimeProperty(auto_now_add=True)
-    contact = db.EmailProperty()
-    category = db.StringProperty()
+class Post(ndb.Model):
+    postID = ndb.StringProperty()
+    traderID = ndb.StringProperty()
+    title = ndb.StringProperty()
+    location = ndb.StringProperty()
+    price = ndb.FloatProperty()
+    content = ndb.TextProperty()
+    engage = ndb.DateTimeProperty(auto_now_add=True)
+    contact = ndb.StringProperty()
+    category = ndb.StringProperty()
 
 def post_key(postID=None):
     """ Construct a Datastore key for the Post from the postID. """
-    return db.Key.from_path('Post', postID or 'does_not_exist')
+    return ndb.Key.from_path('Post', postID or 'does_not_exist')
 
 
 
@@ -227,7 +244,8 @@ def post_key(postID=None):
 app = webapp2.WSGIApplication([('/', MainPage),
                                 ('/post', PostView),
                                 ('/post/edit', PostForm),
-                                ('/trader', TraderView)],
+                                ('/trader', TraderView),
+                                ('/trader/posts', TraderPostView)],
                             debug = True)
 
 def main():

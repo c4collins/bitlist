@@ -1,0 +1,21 @@
+{% extends "footer.html" %}
+
+{% block content_container %}
+    <div class="row">
+        <div class="span12">
+            {% for post in posts %}
+                <a href="/post?postID={{ post.postID }}">{{ post.title }}</a>
+            {% endfor %}
+        </div>
+    </div>
+<div class="row">
+        <div class="span12">
+            {% if more and next %}
+            <a href="/trader/posts?cursor={{ next }}">More...</a>
+            {% endif %}
+        </div>
+    </div>
+    
+
+
+{% endblock content_container %}
