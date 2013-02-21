@@ -175,7 +175,7 @@ class PostView(webapp2.RequestHandler):
                 'trader_posts': get_trader_posts(user),
                 'listings': [this_post],
                 'postID' : postID,
-                'status_message' : "Your post had errors and was not sent.  Please enter a valid email address.",
+                'status_message' : "Your message had errors and was not sent.  Please enter a valid email address.",
             }
 
             path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
@@ -194,12 +194,9 @@ class PostView(webapp2.RequestHandler):
                 if email.get('name') == "Post Reply":
                     message_prefix = email.find('header').text
                     message_suffix = email.find('footer').text
-
-
             full_message = message_subject + " - " + recipient_address + " - " +sender_address + " - " +message_prefix + " - " + sender_message + " - " + message_suffix
       
-            mail.send_mail(sender_address, recipient_address, message_subject, full_message)
-
+            mail.send_mail("pierce403@gmail.com", recipient_address, message_subject, full_message)
 
             user = users.get_current_user()
             template_values = {
