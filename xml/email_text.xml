@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!-- The string '%0D%0A' is used to force a newlin and reset the text register in plaintext emails, though it's rendered as text in a web browser. -->
+<data>
+    <email name="Post Reply">
+        <header>An interested buyer has replied to your post.%0D%0A</header>
+        <footer>%0D%0AYou can reply to this message to contact the interested party directly.  Thanks for your participation!</footer>
+    </email>
+</data>

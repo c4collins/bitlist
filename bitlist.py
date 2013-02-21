@@ -1,10 +1,23 @@
 import webapp2, cgi, os, datetime, urllib, hashlib
-from google.appengine.api import users
-from google.appengine.ext import webapp, ndb
+from xml.etree import ElementTree
+from google.appengine.api import users, mail
+from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.datastore.datastore_query import Cursor
 
+##
+# Site Name/URL
+# This is used in a few places to construct strings required for the emails
+# It is used as the final piece of the contact_email when a post is created
+# It is also used to construct URLs in the email text.
+##
+
+site_name = "Bitcoin List"
+## If changed here, the name should also be changed in: 
+# Site title in nav bar: nav.html   - <a class="brand">Bitcoin List</a>
+# Site title in browser: base.html  - <title>bitcoin List</title>
+site_url = 'bitcoinlist.appspot.com'
 
 ##
 # OpenID Providers
@@ -46,7 +59,7 @@ def get_trader_posts(user, fetch=3):
     if user:
         user_id = user.user_id()
         trader_post_query = Post.query(Post.traderID==user_id)
-        if slice:
+        if fetch:
             trader_post_query = trader_post_query.fetch(fetch)
         return trader_post_query
     else:
@@ -108,7 +121,7 @@ class PostForm(webapp2.RequestHandler):
     def post(self):
         user = users.get_current_user()
         post = Post()
-        post.traderID = str(user.user_id())
+        post.traderID = str(user.email())
         post.title = self.request.get('title')
         post.location = self.request.get('location')
         post.price = float(self.request.get('price'))
@@ -116,9 +129,9 @@ class PostForm(webapp2.RequestHandler):
         post.category = self.request.get('category')
  
         contact = hashlib.md5()
-        contact.update( str( datetime.datetime.now() ) + post.title + post.traderID )
+        contact.update( str( datetime.datetime.now() ) + post.title + str(post.price) )
         contact = contact.hexdigest()
-        post.contact = contact + '@bitlist.appspot.com'
+        post.contact = contact + "@" + site_url
         post.postID = ndb.Key(Post, contact).urlsafe()
 
 
@@ -150,6 +163,56 @@ class PostView(webapp2.RequestHandler):
         path = os.path.join( os.path.dirname(__file__), 'www/templates/post.html' )
         self.response.out.write( template.render( path, template_values ))
     
+    def post(self):
+        postID = self.request.get('postID')
+        this_post = Post.query(Post.postID==postID).order(-Post.engage).get()
+        recipient_address = this_post.traderID
+
+        if not mail.is_email_valid(self.request.get("sender_email")):
+            user = users.get_current_user()
+            template_values = {
+                'link_list': get_login_link_list(self, user),
+                'trader_posts': get_trader_posts(user),
+                'listings': [this_post],
+                'postID' : postID,
+                'status_message' : "Your post had errors and was not sent.  Please enter a valid email address.",
+            }
+
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
+            self.response.out.write( template.render( path, template_values ))
+        else:
+            sender_address = "%s ^%s^" % (self.request.get("sender_name"), self.request.get("sender_email"))
+            sender_message = self.request.get("sender_message")
+            message_subject = "Message about: %s" % this_post.title
+            
+            xml_path = os.path.join( os.path.dirname(__file__), 'xml/email_text.xml' )
+            tree = ElementTree.parse(xml_path)
+            root = tree.getroot()
+
+            for email in root.findall('email'):
+                post_url = site_url + "/post?postID=" + postID
+                if email.get('name') == "Post Reply":
+                    message_prefix = email.find('header').text
+                    message_suffix = email.find('footer').text
+
+
+            full_message = message_subject + " - " + recipient_address + " - " +sender_address + " - " +message_prefix + " - " + sender_message + " - " + message_suffix
+      
+            mail.send_mail(sender_address, recipient_address, message_subject, full_message)
+
+
+            user = users.get_current_user()
+            template_values = {
+                'link_list': get_login_link_list(self, user),
+                'trader_posts': get_trader_posts(user),
+                'listings': [this_post],
+                'postID' : postID,
+                'status_message' : "Your message has been successfully sent.",
+            }
+
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
+            self.response.out.write( template.render( path, template_values ))
+
     
 
 ##
@@ -219,8 +282,8 @@ class TraderPostView(webapp2.RequestHandler):
 ##
 
 class Post(ndb.Model):
-    postID = ndb.StringProperty()
-    traderID = ndb.StringProperty()
+    postID = ndb.StringProperty()                       # URL-safe NDB key
+    traderID = ndb.StringProperty()                     # OpenID email of user who posted
     title = ndb.StringProperty()
     location = ndb.StringProperty()
     price = ndb.FloatProperty()

@@ -1,6 +1,7 @@
 {% extends "footer.html" %}
 
 {% block content_container %}
+    {% block status_message %}{% endblock status_message %}
     <div class="hero-unit">
         <h1> {{ postID }} </h1>
         {% for listing in listings %}
@@ -14,6 +15,31 @@
             {% endif %}
             <p>{{ listing.engage }}</p>
             <blockquote>{{ listing.price }}</blockquote>
+            </div>
+            <div class="row">
+                <div class="span12">
+                    <form action="/post" method="post">
+                        <ul>
+                            <li>
+                                <label for="sender_name">Name</label>
+                                <input type="text" name="sender_name" placeholder="Your Name">
+                            </li>
+                            <li>
+                                <label for="sender_email">Email</label>
+                                <input type="email" name="sender_email" default="Digital" required>
+                            </li>
+                            <li>
+                                <label for="sender_message">Message to Trader:</label>
+                                <textarea name="sender_message" rows="10" cols="240" required></textarea>
+                            </li>
+                            <li>
+                                <input type="hidden" name="postID" value="{{ postID }}">
+                                <input type="submit" value="Send Email" class="btn btn-primary btn-large">
+                            </li>
+                        </ul>
+                    </form>
+                </div>
+            </div>
         {% endfor %}
-
+    
 {% endblock content_container %}
