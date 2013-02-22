@@ -14,15 +14,15 @@
                 <ul class="nav">
                     <li class="active"><a href="/">Home</a></li>
                     <li><a href="/post/edit">Make a Post</a></li>
-                    {% if link_list|length < 2 %}
+                    {% if gvalues.link_list|length < 2 %}
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Account<b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li><a href="/trader">Profile</a></li>
-                                {% if trader_posts %}
+                                <li><a href="/trader">Profile{{ globalval.a }}</a></li>
+                                {% if gvalues.trader_posts %}
                                     <li class="divider"></li>
                                     <li class="nav-header">Recent Posts</li>
-                                    {% for post in trader_posts|slice:":5" %}
+                                    {% for post in gvalues.trader_posts|slice:":5" %}
                                         <li><a href="/post?postID={{ post.postID }}">{{ post.title }}</a></li>
                                     {% endfor %}
                                     <li><a href="/trader/posts">All Posts...</a></li>
@@ -32,7 +32,7 @@
                     {% endif %}
                 </ul>
                 <form class="navbar-form pull-right">
-                    {% for link in link_list %}
+                    {% for link in gvalues.link_list %}
                         <a href="{{ link.url }}">{{ link.name }}</a>
                     {% endfor %}
                 </form>

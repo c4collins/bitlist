@@ -32,7 +32,6 @@ providers = {
     #'MyOpenID' : 'myopenid.com'
 }
 
-
 ##
 # Helper Functions
 # These functions would otherwise be repeated in multiple classes.
@@ -57,7 +56,7 @@ def get_login_link_list(page_self, user):
 
 def get_trader_posts(user, fetch=3):
     if user:
-        user_id = user.user_id()
+        user_id = user.email()
         trader_post_query = Post.query(Post.traderID==user_id)
         if fetch:
             trader_post_query = trader_post_query.fetch(fetch)
@@ -66,7 +65,28 @@ def get_trader_posts(user, fetch=3):
         return None
 
 
+def get_global_template_vars(self, user=None, length=None):
+    
 
+
+
+
+
+    template_values = {
+            'link_list': get_login_link_list(self, user),
+            'trader_posts': get_trader_posts(user, length),
+            }
+    return template_values
+
+
+
+def get_email_text(email_name):
+    xml_path = os.path.join( os.path.dirname(__file__), 'xml/email_text.xml' )
+    tree = ElementTree.parse(xml_path)
+    root = tree.getroot()
+    for email in root.findall('email'):
+            if email.get('name') == email_name:
+                return email
 ##
 # MainPage & Associated Categories
 # The MainPage is to serve as basically just a listing of categories, and then maybe soem featured posts
@@ -78,11 +98,10 @@ class MainPage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
 
-        listings_query = Post.query().order(-Post.engage)       
+        listings_query = Post.query().order(-Post.engage)     
 
         template_values = {
-            'link_list': get_login_link_list(self, user),
-            'trader_posts': get_trader_posts(user, 10),
+            'gvalues': get_global_template_vars(self, user, 10),
             'listings': listings_query,
         }
 
@@ -101,18 +120,30 @@ class PostForm(webapp2.RequestHandler):
         user = users.get_current_user()
 
         if user:
-            categories = [{ "name" : "Digital Goods"  , "ID" : "digital" },
-                          { "name" : "Real-Life Items", "ID" : "ephemeral"}]
+            categories = [{ "name" : "Looking to Work"  , "ID" : "employee" },
+                          { "name" : "Looking to Hire"  , "ID" : "employer" },
+                          { "name" : "Looking to Buy"   , "ID" : "buyer"    },
+                          { "name" : "Looking to Sell"  , "ID" : "seller"   },
+                          ]
+            subcategories = [{ "name" : "Web Design"            , "ID" : "webdesign" },
+                             { "name" : "Web Programming"       , "ID" : "webdev"    },
+                             { "name" : "Graphic Design"        , "ID" : "graphics"  },
+                             { "name" : "Hardware Design"       , "ID" : "hardware"  },
+                             { "name" : "Security"              , "ID" : "security"  },
+                             { "name" : "Misc. Scripts"         , "ID" : "scipts"    },
+                             { "name" : "Information Design"    , "ID" : "infodesign"},
+                             { "name" : "Game Development"      , "ID" : "gamedev"   },
+                            ]
             template_values = {
-                'link_list': get_login_link_list(self, user),
-                'trader_posts': get_trader_posts(user),
+                'gvalues': get_global_template_vars(self, user),
                 'categories': categories,
+                'subcategories': subcategories,
             }
             path = os.path.join( os.path.dirname(__file__), 'www/templates/post_form.html' )
             self.response.out.write( template.render( path, template_values ))
         else:
             template_values = {
-                'link_list': get_login_link_list(self, user),
+                'gvalues': get_global_template_vars(self, user),
             }
             path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
             self.response.out.write( template.render( path, template_values ))
@@ -127,7 +158,7 @@ class PostForm(webapp2.RequestHandler):
         post.price = float(self.request.get('price'))
         post.content = self.request.get('content')
         post.category = self.request.get('category')
- 
+        post.subcategory = self.request.get('subcategory') or None
         contact = hashlib.md5()
         contact.update( str( datetime.datetime.now() ) + post.title + str(post.price) )
         contact = contact.hexdigest()
@@ -154,8 +185,7 @@ class PostView(webapp2.RequestHandler):
         
 
         template_values = {
-            'link_list': get_login_link_list(self, user),
-            'trader_posts': get_trader_posts(user),
+            'gvalues': get_global_template_vars(self, user),
             'listings': listings,
             'postID' : postID,
         }
@@ -171,8 +201,7 @@ class PostView(webapp2.RequestHandler):
         if not mail.is_email_valid(self.request.get("sender_email")):
             user = users.get_current_user()
             template_values = {
-                'link_list': get_login_link_list(self, user),
-                'trader_posts': get_trader_posts(user),
+                'gvalues': get_global_template_vars(self, user),
                 'listings': [this_post],
                 'postID' : postID,
                 'status_message' : "Your message had errors and was not sent.  Please enter a valid email address.",
@@ -183,25 +212,22 @@ class PostView(webapp2.RequestHandler):
         else:
             sender_address = "%s ^%s^" % (self.request.get("sender_name"), self.request.get("sender_email"))
             sender_message = self.request.get("sender_message")
-            message_subject = "Message about: %s" % this_post.title
-            
-            xml_path = os.path.join( os.path.dirname(__file__), 'xml/email_text.xml' )
-            tree = ElementTree.parse(xml_path)
-            root = tree.getroot()
+            message_subject = "Message from %s about: %s" % (site_name, this_post.title)
 
-            for email in root.findall('email'):
-                post_url = site_url + "/post?postID=" + postID
-                if email.get('name') == "Post Reply":
-                    message_prefix = email.find('header').text
-                    message_suffix = email.find('footer').text
+            post_url = site_url + "/post?postID=" + postID
+            
+            ## get email from the email_text.xml file
+            email = get_email_text("Post Reply")
+            message_prefix = email.find('header').text
+            message_suffix = email.find('footer').text
+            # compose the body of the message being sent
             full_message = message_subject + " - " + recipient_address + " - " +sender_address + " - " +message_prefix + " - " + sender_message + " - " + message_suffix
       
             mail.send_mail("pierce403@gmail.com", recipient_address, message_subject, full_message)
 
             user = users.get_current_user()
             template_values = {
-                'link_list': get_login_link_list(self, user),
-                'trader_posts': get_trader_posts(user),
+                'gvalues': get_global_template_vars(self, user),
                 'listings': [this_post],
                 'postID' : postID,
                 'status_message' : "Your message has been successfully sent.",
@@ -225,8 +251,7 @@ class TraderView(webapp2.RequestHandler):
 
         if user:
             template_values = {
-            'link_list' : get_login_link_list(self, user),
-            'trader_posts': get_trader_posts(user, None),
+            'gvalues': get_global_template_vars(self, user),
             'nickname' : user.nickname(),
             'email' : user.email(), 
             'user_id' : user.user_id(), 
@@ -250,23 +275,24 @@ class TraderPostView(webapp2.RequestHandler):
         user = users.get_current_user()
 
         if user:
-            user_id = user.user_id()
+            user_id = user.email()
 
             cursor = Cursor(urlsafe=self.request.get('cursor'))
             posts, next_cursor, more = Post.query(Post.traderID==user_id).order(-Post.engage).fetch_page(10, start_cursor=cursor)
+            if next_cursor != None:
+                next_cursor = next_cursor.urlsafe()
 
             template_values = {
-                'link_list' : get_login_link_list(self, user),
-                'trader_posts': get_trader_posts(user, None),
+                'gvalues': get_global_template_vars(self, user),
                 'posts' : posts,
-                'next' : next_cursor.urlsafe(),
+                'next' : next_cursor,
                 'more' : more,
             }
 
             path = os.path.join( os.path.dirname(__file__), 'www/templates/trader_posts.html' )
         else:
             template_values = {
-                'link_list' : get_login_link_list(self, user),
+                'gvalues': get_global_template_vars(self),
             }
             path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
         
@@ -288,10 +314,11 @@ class Post(ndb.Model):
     engage = ndb.DateTimeProperty(auto_now_add=True)
     contact = ndb.StringProperty()
     category = ndb.StringProperty()
+    subcategory = ndb.StringProperty()
 
 def post_key(postID=None):
     """ Construct a Datastore key for the Post from the postID. """
-    return ndb.Key.from_path('Post', postID or 'does_not_exist')
+   # return ndb.Key.from_path('Post', postID or 'does_not_exist')
 
 
 

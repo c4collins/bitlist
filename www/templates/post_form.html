@@ -19,6 +19,15 @@
                         </select>
                     </li>
                     <li>
+                        <label for="subcategory">Listing Subcategory</label>
+                        <select name="subcategory">
+                            <option value="">Please Choose One</option>  
+                            {% for category in subcategories %}
+                                <option value="{{ category.ID }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </li>
+                    <li>
                         <label for="location">Location</label>
                         <input type="text" name="location" default="Digital">
                     </li>
