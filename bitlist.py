@@ -311,9 +311,33 @@ class EmailReceived(InboundMailHandler):
     def post(self):
         #logging.info("Received a message from: ", mail_message.sender)
         message = mail.InboundEmailMessage(self.request.body)
+        ## Get the traderID from the post based on the email address and "forward" the email
+        post_id = message.to.split('@')[0]
+        this_post = Post.query(Post.postID==post_id).order(-Post.engage).get()
+        email_to = this_post.traderID
 
-## Test code ##
-        mail.send_mail(app_email_address, "connor.collins@gmail.com", "test message", str(message))
+        if mail.is_email_valid(email_to):
+            email_messages = message.bodies('text/plain')
+            email = get_email_text("Post Reply")
+            
+            for content_type, msg in email_messages:
+                full_message = mail.EmailMessage(sender="%s <admin@%s>" % (site_name, email_suffix) ,
+                                                 subject="Reply to '%s'" % (this_post.title) ,
+                                                 to="%s <%s>" % (email_to.split('@')[0], email_to) ,
+                                                 body=email.find('header').text + "\n" + msg.decode() + "\n" + email.find('footer').text ,
+                )
+                full_message.send()
+        else:
+            email_messages = message.bodies('text/plain')
+            email = get_email_text("Post Reply")
+            
+            for content_type, msg in email_messages:
+                full_message = mail.EmailMessage(sender="%s <admin@%s>" % (site_name, email_suffix) ,
+                                                 subject="ERROR: Reply to '%s'" % (this_post.title) ,
+                                                 to="connor.collins@gmail.com" ,
+                                                 body=email.find('header').text + "\n" + msg.decode() + "\n" + email.find('footer').text + "\nEmailed to: " + email_to,
+                )
+                full_message.send()
 
 ##
 # Data Models
