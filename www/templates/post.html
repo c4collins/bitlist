@@ -2,44 +2,45 @@
 
 {% block content_container %}
     {% block status_message %}{% endblock status_message %}
-    <div class="hero-unit">
-        <h1> {{ postID }} </h1>
+    <div class="row">
         {% for listing in listings %}
-            <h2>{{ listing.postID }}</h2>
-            <b><a href="/post?postID={{ listing.postID }}">{{ listing.title }}</a></b>
+        <div class="span7 single-post">
+            <h2><a href="/post?postID={{ listing.postID }}">{{ listing.title }}</a></h2>
+            <h5>{{ listing.price }}</h5>
+            <a href="mailto:{{ listing.contact }}?Subject={{ listing.title }}">
+                {{ listing.contact }}
+            </a>
             {% if listing.content %}
                 <p>{{ listing.content }}</p>
-                <p>{{ listing.traderID }}</p>
+            <h5>{{ post.price }}</h5>
             {% else %}
                 <b>The post you have requested does not currently exist.</b>
             {% endif %}
-            <p>{{ listing.engage }}</p>
-            <blockquote>{{ listing.price }}</blockquote>
-            </div>
-            <div class="row">
-                <div class="span12">
-                    <form action="/post" method="post">
-                        <ul>
-                            <li>
-                                <label for="sender_name">Name</label>
-                                <input type="text" name="sender_name" placeholder="Your Name">
-                            </li>
-                            <li>
-                                <label for="sender_email">Email</label>
-                                <input type="email" name="sender_email" default="Digital" required>
-                            </li>
-                            <li>
-                                <label for="sender_message">Message to Trader:</label>
-                                <textarea name="sender_message" rows="10" cols="240" required></textarea>
-                            </li>
-                            <li>
-                                <input type="hidden" name="postID" value="{{ postID }}">
-                                <input type="submit" value="Send Email" class="btn btn-primary btn-large">
-                            </li>
-                        </ul>
-                    </form>
-                </div>
-            </div>
+            
+        </div>
         {% endfor %}
+        <div class="span3">
+            <form action="/post" method="post">
+                <ul>
+                    <li>
+                        <label for="sender_name">Name</label>
+                        <input type="text" name="sender_name" placeholder="Your Name">
+                    </li>
+                    <li>
+                        <label for="sender_email">Email</label>
+                        <input type="email" name="sender_email" default="Digital" required>
+                    </li>
+                    <li>
+                        <label for="sender_message">Message to Trader:</label>
+                        <textarea name="sender_message" rows="10" cols="240" required></textarea>
+                    </li>
+                    <li>
+                        <input type="hidden" name="postID" value="{{ postID }}">
+                        <input type="submit" value="Send Email" class="btn btn-primary btn-large">
+                    </li>
+                </ul>
+            </form>
+        </div>
+    </div>
     
 {% endblock content_container %}

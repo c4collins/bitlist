@@ -12,6 +12,12 @@ indexes:
 
 - kind: Post
   properties:
+  - name: contact
+  - name: engage
+    direction: desc
+
+- kind: Post
+  properties:
   - name: postID
   - name: engage
     direction: desc

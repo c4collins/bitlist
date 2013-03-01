@@ -159,7 +159,7 @@ class PostForm(webapp2.RequestHandler):
         post.traderID = str(user.email())
         post.title = self.request.get('title')
         post.location = self.request.get('location')
-        post.price = float(self.request.get('price'))
+        post.price = "%.8f" % float(self.request.get('price'))
         post.content = self.request.get('content')
         post.category = self.request.get('category')
         post.subcategory = self.request.get('subcategory') or None
@@ -313,8 +313,7 @@ class EmailReceived(InboundMailHandler):
         #logging.info("Received a message from: ", mail_message.sender)
         message = mail.InboundEmailMessage(self.request.body)
         ## Get the traderID from the post based on the email address and "forward" the email
-        post_id = message.to.split('@')[0]
-        this_post = Post.query(Post.postID==post_id).order(-Post.engage).get()
+        this_post = Post.query(Post.contact==message.to).order(-Post.engage).get()
         email_to = this_post.traderID
 
         if mail.is_email_valid(email_to):
@@ -343,7 +342,7 @@ class Post(ndb.Model):
     traderID = ndb.StringProperty()                     # OpenID email of user who posted
     title = ndb.StringProperty()
     location = ndb.StringProperty()
-    price = ndb.FloatProperty()
+    price = ndb.StringProperty()
     content = ndb.TextProperty()
     engage = ndb.DateTimeProperty(auto_now_add=True)
     contact = ndb.StringProperty()

@@ -9,9 +9,22 @@ form ul li {
     list-style-type: none;
 }
 
+.single-post{
+    background: #EEE;
+    margin-bottom: 6px;
+    padding-left: 6px;
+    padding-right: 6px;
+    border: 1px solid #DDD;
+    width:100%;
+}
 
+.single-post h2, .single-post h3, .single-post h4, .single-post h5{
+    display:inline;
+} 
 
-
+.single-post h5{
+    float:right;
+}
 
 
 
