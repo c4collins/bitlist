@@ -21,7 +21,7 @@ handlers:
   static_dir: www/img
 
 - url: /_ah/mail/.+
-  script: bitlist.mail
+  script: bitlist.email_handler
   login: admin
 
 - url: /.*

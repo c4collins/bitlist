@@ -20,7 +20,7 @@ site_name = "Bitcoin List"
 # Site title in nav bar: nav.html   - <a class="brand">Bitcoin List</a>
 # Site title in browser: base.html  - <title>Bitcoin List</title>
 ##  This is the email address that all emails will be sent from, it MUST be registered on GAE
-app_email_address = "pierce403@gmail.com"
+app_email_address = "connor.collins@gmail.com"
 
 
 ##
@@ -308,12 +308,12 @@ class TraderPostView(webapp2.RequestHandler):
 # forwards the message to the post's owner's real email address.
 ##
 class EmailReceived(InboundMailHandler):
-    def recieve(self, mail_message):
-        logging.info("Received a message from: ", mail_message.sender)
+    def post(self):
+        #logging.info("Received a message from: ", mail_message.sender)
         message = mail.InboundEmailMessage(self.request.body)
 
 ## Test code ##
-        mail.send_mail(app_email_address, "connor.collins@gmail.com", "test message", message)
+        mail.send_mail(app_email_address, "connor.collins@gmail.com", "test message", str(message))
 
 ##
 # Data Models
@@ -344,7 +344,7 @@ def post_key(postID=None):
 # app defines the URIs for everything in this file, which is relative to the URL supplies in app.yaml
 # mail handles mail receipts, and none of those classes should be in app as they are internal
 ##
-mail = webapp2.WSGIApplication( [ EmailReceived.mapping() ],
+email_handler = webapp2.WSGIApplication( [ EmailReceived.mapping() ],
                             debug = True)
 app = webapp2.WSGIApplication( [( '/'             , MainPage ),
                                 ( '/post'         , PostView ),
