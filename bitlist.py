@@ -1,23 +1,27 @@
-import webapp2, cgi, os, datetime, urllib, hashlib
+import webapp2, cgi, os, datetime, urllib, hashlib, logging
 from xml.etree import ElementTree
 from google.appengine.api import users, mail
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
+from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from google.appengine.datastore.datastore_query import Cursor
 
 ##
-# Site Name/URL
-# This is used in a few places to construct strings required for the emails
-# It is used as the final piece of the contact_email when a post is created
-# It is also used to construct URLs in the email text.
+# Site Name/URL and Email Suffix
+# These is used in a few places to construct strings required for the emails
+# email_suffix is used as the final piece of the contact_email when a post is created
+# site_url is used to construct URLs in the email text.
 ##
-
-site_name = "Bitcoin List"
-## If changed here, the name should also be changed in: 
-# Site title in nav bar: nav.html   - <a class="brand">Bitcoin List</a>
-# Site title in browser: base.html  - <title>bitcoin List</title>
 site_url = 'bitcoinlist.appspot.com'
+email_suffix = 'bitcoinlist.appspotmail.com'
+site_name = "Bitcoin List"
+# If changed here, the name should also be changed in: 
+# Site title in nav bar: nav.html   - <a class="brand">Bitcoin List</a>
+# Site title in browser: base.html  - <title>Bitcoin List</title>
+##  This is the email address that all emails will be sent from, it MUST be registered on GAE
+app_email_address = "pierce403@gmail.com"
+
 
 ##
 # OpenID Providers
@@ -162,7 +166,7 @@ class PostForm(webapp2.RequestHandler):
         contact = hashlib.md5()
         contact.update( str( datetime.datetime.now() ) + post.title + str(post.price) )
         contact = contact.hexdigest()
-        post.contact = contact + "@" + site_url
+        post.contact = contact + "@" + email_suffix
         post.postID = ndb.Key(Post, contact).urlsafe()
 
 
@@ -223,7 +227,7 @@ class PostView(webapp2.RequestHandler):
             # compose the body of the message being sent
             full_message = message_subject + " - " + recipient_address + " - " +sender_address + " - " +message_prefix + " - " + sender_message + " - " + message_suffix
       
-            mail.send_mail("pierce403@gmail.com", recipient_address, message_subject, full_message)
+            mail.send_mail(app_email_address, recipient_address, message_subject, full_message)
 
             user = users.get_current_user()
             template_values = {
@@ -298,6 +302,18 @@ class TraderPostView(webapp2.RequestHandler):
         
         self.response.out.write( template.render( path, template_values ))
 
+##
+# EmailReceived
+# This receives an email as a HTTP POST from any address, reformates it, and
+# forwards the message to the post's owner's real email address.
+##
+class EmailReceived(InboundMailHandler):
+    def recieve(self, mail_message):
+        logging.info("Received a message from: ", mail_message.sender)
+        message = mail.InboundEmailMessage(self.request.body)
+
+## Test code ##
+        mail.send_mail(app_email_address, "connor.collins@gmail.com", "test message", message)
 
 ##
 # Data Models
@@ -326,13 +342,16 @@ def post_key(postID=None):
 ##
 # Other GAE requirements
 # app defines the URIs for everything in this file, which is relative to the URL supplies in app.yaml
-# The rest is just fluff to keep me sane.
+# mail handles mail receipts, and none of those classes should be in app as they are internal
 ##
-app = webapp2.WSGIApplication([('/', MainPage),
-                                ('/post', PostView),
-                                ('/post/edit', PostForm),
-                                ('/trader', TraderView),
-                                ('/trader/posts', TraderPostView)],
+mail = webapp2.WSGIApplication( [ EmailReceived.mapping() ],
+                            debug = True)
+app = webapp2.WSGIApplication( [( '/'             , MainPage ),
+                                ( '/post'         , PostView ),
+                                ( '/post/edit'    , PostForm ),
+                                ( '/trader'       , TraderView ),
+                                ( '/trader/posts' , TraderPostView ),
+                                ],
                             debug = True)
 
 def main():

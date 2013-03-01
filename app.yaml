@@ -4,6 +4,9 @@ runtime: python27
 api_version: 1
 threadsafe: no
 
+inbound_services:
+- mail
+
 handlers:
 #- url: /_ah/login_required   ## Not necessary?  Keeping as reference for now
 #  script: do_openid_login.py ## as it might be required for OpenID
@@ -17,6 +20,12 @@ handlers:
 - url: /img
   static_dir: www/img
 
+- url: /_ah/mail/.+
+  script: bitlist.mail
+  login: admin
+
 - url: /.*
   script: bitlist.app
   # login: required # if this were to be used as a login-required view
+
+
