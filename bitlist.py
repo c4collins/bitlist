@@ -214,20 +214,21 @@ class PostView(webapp2.RequestHandler):
             path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
             self.response.out.write( template.render( path, template_values ))
         else:
-            sender_address = "%s ^%s^" % (self.request.get("sender_name"), self.request.get("sender_email"))
-            sender_message = self.request.get("sender_message")
-            message_subject = "Message from %s about: %s" % (site_name, this_post.title)
-
             post_url = site_url + "/post?postID=" + postID
             
             ## get email from the email_text.xml file
             email = get_email_text("Post Reply")
-            message_prefix = email.find('header').text
-            message_suffix = email.find('footer').text
             # compose the body of the message being sent
-            full_message = message_subject + " - " + recipient_address + " - " +sender_address + " - " +message_prefix + " - " + sender_message + " - " + message_suffix
-      
-            mail.send_mail(app_email_address, recipient_address, message_subject, full_message)
+            full_message = mail.EmailMessage(sender     = "%s <admin@%s>" % (site_name, email_suffix) ,
+                                             subject    = "Reply to '%s'" % (this_post.title) ,
+                                             to         = "%s <%s>" % (this_post.traderID.split('@')[0], this_post.traderID) ,
+                                             reply_to   = self.request.get("sender_email") ,
+                                             body       = email.find('header').text
+                                             + "\n\n" + post_url
+                                             + "\n" + self.request.get("sender_message") 
+                                             + "\n\n" + email.find('footer').text ,
+            )
+            full_message.send()
 
             user = users.get_current_user()
             template_values = {
@@ -321,21 +322,14 @@ class EmailReceived(InboundMailHandler):
             email = get_email_text("Post Reply")
             
             for content_type, msg in email_messages:
-                full_message = mail.EmailMessage(sender="%s <admin@%s>" % (site_name, email_suffix) ,
-                                                 subject="Reply to '%s'" % (this_post.title) ,
-                                                 to="%s <%s>" % (email_to.split('@')[0], email_to) ,
-                                                 body=email.find('header').text + "\n" + msg.decode() + "\n" + email.find('footer').text ,
-                )
-                full_message.send()
-        else:
-            email_messages = message.bodies('text/plain')
-            email = get_email_text("Post Reply")
-            
-            for content_type, msg in email_messages:
-                full_message = mail.EmailMessage(sender="%s <admin@%s>" % (site_name, email_suffix) ,
-                                                 subject="ERROR: Reply to '%s'" % (this_post.title) ,
-                                                 to="connor.collins@gmail.com" ,
-                                                 body=email.find('header').text + "\n" + msg.decode() + "\n" + email.find('footer').text + "\nEmailed to: " + email_to,
+                full_message = mail.EmailMessage(sender     = "%s <admin@%s>" % (site_name, email_suffix) ,
+                                                 subject    = "Reply to '%s'" % (this_post.title) ,
+                                                 to         = "%s <%s>" % (email_to.split('@')[0], email_to) ,
+                                                 reply_to   = message.sender ,
+                                                 body       = email.find('header').text 
+                                                 + "\n\n" + str(message.subject).upper() 
+                                                 + "\n" + msg.decode() 
+                                                 + "\n\n" + email.find('footer').text ,
                 )
                 full_message.send()
 
