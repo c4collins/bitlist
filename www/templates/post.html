@@ -3,7 +3,6 @@
 {% block content_container %}
     {% block status_message %}{% endblock status_message %}
     <div class="row">
-        {% for listing in listings %}
         <div class="span7 single-post">
             <h2><a href="/post?postID={{ listing.postID }}">{{ listing.title }}</a></h2>
             <h5>{{ listing.price }}</h5>
@@ -15,10 +14,10 @@
             <h5>{{ post.price }}</h5>
             {% else %}
                 <b>The post you have requested does not currently exist.</b>
+                <p>{{ listing }}</p>
+                <p>{{ postID }}</p>
             {% endif %}
-            
         </div>
-        {% endfor %}
         <div class="span3">
             <form action="/post" method="post">
                 <ul>

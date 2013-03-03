@@ -117,6 +117,7 @@ class MainPage(webapp2.RequestHandler):
 # Post is the data model (below)
 # PostForm is the create/update form
 # PostView is the publically-available post
+# DeletePost simply removes the indicated object from the datastore
 ##
 
 class PostForm(webapp2.RequestHandler):
@@ -143,8 +144,7 @@ class PostForm(webapp2.RequestHandler):
                 'subcategories': subcategories,
             }
             if self.request.get('postID'):
-                postID = self.request.get('postID')
-                this_post = Post.query(Post.postID==postID).get()
+                this_post = ndb.Key( urlsafe = self.request.get('postID') ).get()
                 if this_post.traderID == str(user.email()):
                     template_values["this_post"] = this_post
 
@@ -162,18 +162,15 @@ class PostForm(webapp2.RequestHandler):
         user = users.get_current_user()
         if self.request.get('postID'):
             # if the post exists (i.e. we're editing rather than creating) get that post
-            postID = self.request.get('postID')
-            post = Post.query(Post.postID==postID).get()
+            post = ndb.Key( urlsafe = self.request.get('postID') ).get()
         else:
             # otherwise, create a new post, and add all the immutable detailes to it
             post = Post()
             contact = hashlib.md5()
-            contact.update( str( datetime.datetime.now() ) + post.title + str(post.price))
+            contact.update( str( datetime.datetime.now() ) + self.request.get('title') + self.request.get('price'))
             contact = contact.hexdigest()
             post.contact = contact + "@" + email_suffix
             post.traderID = str(user.email())
-            post.postID = ndb.Key(Post, contact).urlsafe()
-
         # These items can be edited post-creation, as the post page changes over time, 
         # this list should also change to include everything in the form
         post.title = self.request.get('title')
@@ -181,11 +178,14 @@ class PostForm(webapp2.RequestHandler):
         post.price = "%.8f" % float(self.request.get('price'))
         post.content = self.request.get('content')
         post.category = self.request.get('category')
-        post.subcategory = self.request.get('subcategory') or None
+        post.subcategory = self.request.get('subcategory')
 
-
+   
+        if not post.postID:
+            postID = post.put()
+            post.postID = postID.urlsafe()
+        # This either adds the post.postID to the entity if there wasn't one, or updates the edited fields otherwise
         post.put()
-
         
 
         self.redirect('/post?' + urllib.urlencode( {'postID' : post.postID } ) )
@@ -195,25 +195,20 @@ class PostForm(webapp2.RequestHandler):
 
 class PostView(webapp2.RequestHandler):
     def get(self):
-        postID = self.request.get('postID')
-
-        listings = Post.query(Post.postID==postID)
-
+        listing = ndb.Key( urlsafe = self.request.get('postID') ).get()
         user = users.get_current_user()
         
 
         template_values = {
             'gvalues': get_global_template_vars(self, user),
-            'listings': listings,
-            'postID' : postID,
+            'listing': listing,
         }
 
         path = os.path.join( os.path.dirname(__file__), 'www/templates/post.html' )
         self.response.out.write( template.render( path, template_values ))
     
     def post(self):
-        postID = self.request.get('postID')
-        this_post = Post.query(Post.postID==postID).order(-Post.engage).get()
+        this_post = ndb.Key( urlsafe = self.request.get('postID') ).get()
         recipient_address = this_post.traderID
 
         if not mail.is_email_valid(self.request.get("sender_email")):
@@ -255,8 +250,17 @@ class PostView(webapp2.RequestHandler):
             path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
             self.response.out.write( template.render( path, template_values ))
 
-    
+class DeletePost(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        postID = self.request.get('postID')
+        if user and postID:
+            this_post = ndb.Key( urlsafe = postID ).get()
+            if this_post.traderID == str(user.email()):
+                ndb.Key(Post, this_post.postID).delete()
 
+        self.redirect('/post?' + urllib.urlencode( {'postID' : postID } ) )
+        
 ##
 # Trader, TraderView form the basis of the registered-user side of the application
 # Trader is the data model (below)
@@ -280,7 +284,7 @@ class TraderView(webapp2.RequestHandler):
             path = os.path.join( os.path.dirname(__file__), 'www/templates/trader.html' )
         else:
             template_values = {
-            'link_list' : get_login_link_list(self, user),
+            'gvalues': get_global_template_vars(self, user),
             }
             path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
         
@@ -380,6 +384,7 @@ email_handler = webapp2.WSGIApplication( [ EmailReceived.mapping() ],
 app = webapp2.WSGIApplication( [( '/'             , MainPage ),
                                 ( '/post'         , PostView ),
                                 ( '/post/edit'    , PostForm ),
+                                ( '/post/edit/delete', DeletePost ),
                                 ( '/trader'       , TraderView ),
                                 ( '/trader/posts' , TraderPostView ),
                                 ],
