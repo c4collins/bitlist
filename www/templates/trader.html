@@ -16,6 +16,8 @@
                     <a href="/post?postID={{ post.postID }}"><h2>{{ post.title }}</h2></a>
                     <h5>{{ post.price }}</h5>
                     <a href="/post/edit?postID={{ post.postID }}">Edit</a>
+                    <a href=javascript:ShowDeleteButton('delete-{{ post.postID }}')>Delete</a>
+                    <a href="/post/edit/delete?postID={{ post.postID }}" id="delete-{{ post.postID }}" style="display:none;">Confirm Delete</a>
                 </div>
             {% endfor %}
             {% if gvalues.trader_posts|length < 1 %}
@@ -28,4 +30,9 @@
             <p><a class="btn" href="#">View details &raquo;</a></p>
        </div>
     </div>
+    <script type="text/javascript" language="JavaScript"><!--
+    function ShowDeleteButton(d) {
+        document.getElementById(d).style.display = "";
+    }
+    --></script>
 {% endblock content_container %}

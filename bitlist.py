@@ -195,7 +195,10 @@ class PostForm(webapp2.RequestHandler):
 
 class PostView(webapp2.RequestHandler):
     def get(self):
-        listing = ndb.Key( urlsafe = self.request.get('postID') ).get()
+        try:
+            listing = ndb.Key( urlsafe = self.request.get('postID') ).get()
+        except:
+            listing = []
         user = users.get_current_user()
         
 
@@ -255,11 +258,12 @@ class DeletePost(webapp2.RequestHandler):
         user = users.get_current_user()
         postID = self.request.get('postID')
         if user and postID:
-            this_post = ndb.Key( urlsafe = postID ).get()
+            post_key = ndb.Key( urlsafe = postID )
+            this_post = post_key.get()
             if this_post.traderID == str(user.email()):
-                ndb.Key(Post, this_post.postID).delete()
+                post_key.delete()
 
-        self.redirect('/post?' + urllib.urlencode( {'postID' : postID } ) )
+        self.redirect('/trader')
         
 ##
 # Trader, TraderView form the basis of the registered-user side of the application
