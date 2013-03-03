@@ -122,7 +122,6 @@ class MainPage(webapp2.RequestHandler):
 class PostForm(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
-
         if user:
             categories = [{ "name" : "Looking to Work"  , "ID" : "employee" },
                           { "name" : "Looking to Hire"  , "ID" : "employer" },
@@ -143,6 +142,12 @@ class PostForm(webapp2.RequestHandler):
                 'categories': categories,
                 'subcategories': subcategories,
             }
+            if self.request.get('postID'):
+                postID = self.request.get('postID')
+                this_post = Post.query(Post.postID==postID).get()
+                if this_post.traderID == str(user.email()):
+                    template_values["this_post"] = this_post
+
             path = os.path.join( os.path.dirname(__file__), 'www/templates/post_form.html' )
             self.response.out.write( template.render( path, template_values ))
         else:
@@ -155,19 +160,28 @@ class PostForm(webapp2.RequestHandler):
 
     def post(self):
         user = users.get_current_user()
-        post = Post()
-        post.traderID = str(user.email())
+        if self.request.get('postID'):
+            # if the post exists (i.e. we're editing rather than creating) get that post
+            postID = self.request.get('postID')
+            post = Post.query(Post.postID==postID).get()
+        else:
+            # otherwise, create a new post, and add all the immutable detailes to it
+            post = Post()
+            contact = hashlib.md5()
+            contact.update( str( datetime.datetime.now() ) + post.title + str(post.price))
+            contact = contact.hexdigest()
+            post.contact = contact + "@" + email_suffix
+            post.traderID = str(user.email())
+            post.postID = ndb.Key(Post, contact).urlsafe()
+
+        # These items can be edited post-creation, as the post page changes over time, 
+        # this list should also change to include everything in the form
         post.title = self.request.get('title')
         post.location = self.request.get('location')
         post.price = "%.8f" % float(self.request.get('price'))
         post.content = self.request.get('content')
         post.category = self.request.get('category')
         post.subcategory = self.request.get('subcategory') or None
-        contact = hashlib.md5()
-        contact.update( str( datetime.datetime.now() ) + post.title + str(post.price) )
-        contact = contact.hexdigest()
-        post.contact = contact + "@" + email_suffix
-        post.postID = ndb.Key(Post, contact).urlsafe()
 
 
         post.put()
@@ -183,7 +197,7 @@ class PostView(webapp2.RequestHandler):
     def get(self):
         postID = self.request.get('postID')
 
-        listings = Post.query(Post.postID==postID).order(-Post.engage)
+        listings = Post.query(Post.postID==postID)
 
         user = users.get_current_user()
         

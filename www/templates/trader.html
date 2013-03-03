@@ -15,6 +15,7 @@
                 <div class="single-post">
                     <a href="/post?postID={{ post.postID }}"><h2>{{ post.title }}</h2></a>
                     <h5>{{ post.price }}</h5>
+                    <a href="/post/edit?postID={{ post.postID }}">Edit</a>
                 </div>
             {% endfor %}
             {% if gvalues.trader_posts|length < 1 %}

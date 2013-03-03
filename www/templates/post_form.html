@@ -2,17 +2,27 @@
 
 {% block content_container %}
     <div class="hero-unit">
-        <form action="/post/edit" method="post">
+        <form action="/post/edit{% if this_post %}?postID={{ this_post.postID }}{% endif %}" method="post">
             <div>
                 <ul>
                     <li>
                         <label for="title">Listing Title</label>
-                        <input type="text" name="title" placeholder="Listing Title" required>
+                        <input type="text" name="title" placeholder="Listing Title" required {% if this_post %}value="{{ this_post.title }}"{% endif %}>
                     </li>
                     <li>
                         <label for="category">Listing Category</label>
                         <select name="category" required>
-                            <option value="">Please Choose One</option>  
+                            {% if this_post %}
+                            <option value="{{ this_post.category }}">
+                                {% for category in categories %}
+                                    {% if category.ID = this_post.category %}
+                                        {{ category.name }}
+                                    {% endif %}
+                                {% endfor %}
+                            </option>
+                            {% else %}
+                            <option value="">Please Choose One</option> 
+                            {% endif %}
                             {% for category in categories %}
                                 <option value="{{ category.ID }}">{{ category.name }}</option>
                             {% endfor %}
@@ -20,8 +30,18 @@
                     </li>
                     <li>
                         <label for="subcategory">Listing Subcategory</label>
-                        <select name="subcategory">
-                            <option value="">Please Choose One</option>  
+                        <select name="subcategory" required>
+                            {% if this_post %}
+                            <option value="{{ this_post.subcategory }}">
+                                {% for category in subcategories %}
+                                    {% if category.ID = this_post.subcategory %}
+                                        {{ category.name }}
+                                    {% endif %}
+                                {% endfor %}
+                            </option>
+                            {% else %}
+                            <option value="">Please Choose One</option> 
+                            {% endif %}  
                             {% for category in subcategories %}
                                 <option value="{{ category.ID }}">{{ category.name }}</option>
                             {% endfor %}
@@ -29,15 +49,15 @@
                     </li>
                     <li>
                         <label for="location">Location</label>
-                        <input type="text" name="location" default="Digital">
+                        <input type="text" name="location" default="Digital" {% if this_post %}value="{{ this_post.location }}"{% endif %}>
                     </li>
                     <li>
                         <label for="price">Price (In BTC)</label>
-                        <input type="number" name="price" min="0" max="100" step="0.00000001" default="10" required>
+                        <input type="number" name="price" min="0" max="100" step="0.00000001" {% if this_post %}value="{{ this_post.price }}"{% endif %} required>
                     </li>
                     <li>
                         <label for="content">Listing Details</label>
-                        <textarea name="content" rows="10" cols="240" required></textarea>
+                        <textarea name="content" rows="10" cols="240" required spellcheck>{% if this_post %}{{ this_post.content }}{% endif %}</textarea>
                     </li>
                     <li>
                         <input type="submit" value="Post Listing" class="btn btn-primary btn-large">
