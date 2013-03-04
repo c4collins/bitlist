@@ -161,10 +161,10 @@ class PostForm(webapp2.RequestHandler):
     def post(self):
         user = users.get_current_user()
         if self.request.get('postID'):
-            # if the post exists (i.e. we're editing rather than creating) get that post
+            # if the post exists (i.e. we're editing rather than creating), get that post
             post = ndb.Key( urlsafe = self.request.get('postID') ).get()
         else:
-            # otherwise, create a new post, and add all the immutable detailes to it
+            # otherwise, create a new post, and add all the immutable details to it
             post = Post()
             contact = hashlib.md5()
             contact.update( str( datetime.datetime.now() ) + self.request.get('title') + self.request.get('price'))
@@ -213,20 +213,20 @@ class PostView(webapp2.RequestHandler):
     def post(self):
         this_post = ndb.Key( urlsafe = self.request.get('postID') ).get()
         recipient_address = this_post.traderID
-
+        user = users.get_current_user()
+        template_values = {
+            'gvalues': get_global_template_vars(self, user),
+            'listing': this_post,
+            'postID' : this_post.postID,
+        }
         if not mail.is_email_valid(self.request.get("sender_email")):
             user = users.get_current_user()
-            template_values = {
-                'gvalues': get_global_template_vars(self, user),
-                'listings': [this_post],
-                'postID' : postID,
-                'status_message' : "Your message had errors and was not sent.  Please enter a valid email address.",
-            }
+            template_values['status_message'] = "Your message had errors and was not sent.  Please enter a valid email address."
 
             path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
             self.response.out.write( template.render( path, template_values ))
         else:
-            post_url = site_url + "/post?postID=" + postID
+            post_url = site_url + "/post?postID=" + this_post.postID
             
             ## get email from the email_text.xml file
             email = get_email_text("Post Reply")
@@ -236,19 +236,12 @@ class PostView(webapp2.RequestHandler):
                                              to         = "%s <%s>" % (this_post.traderID.split('@')[0], this_post.traderID) ,
                                              reply_to   = self.request.get("sender_email") ,
                                              body       = email.find('header').text
-                                             + "\n\n" + post_url
-                                             + "\n" + self.request.get("sender_message") 
+                                             + "\n" + post_url
+                                             + "\n\n" + self.request.get("sender_message") 
                                              + "\n\n" + email.find('footer').text ,
             )
             full_message.send()
-
-            user = users.get_current_user()
-            template_values = {
-                'gvalues': get_global_template_vars(self, user),
-                'listings': [this_post],
-                'postID' : postID,
-                'status_message' : "Your message has been successfully sent.",
-            }
+            template_values['status_message'] = "Your message has been successfully sent."
 
             path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
             self.response.out.write( template.render( path, template_values ))
@@ -366,14 +359,10 @@ class Post(ndb.Model):
     location = ndb.StringProperty()
     price = ndb.StringProperty()
     content = ndb.TextProperty()
-    engage = ndb.DateTimeProperty(auto_now_add=True)
-    contact = ndb.StringProperty()
+    engage = ndb.DateTimeProperty(auto_now_add=True)    # datetime of inital post
+    contact = ndb.StringProperty()                      # public email attached to post
     category = ndb.StringProperty()
     subcategory = ndb.StringProperty()
-
-def post_key(postID=None):
-    """ Construct a Datastore key for the Post from the postID. """
-   # return ndb.Key.from_path('Post', postID or 'does_not_exist')
 
 
 
