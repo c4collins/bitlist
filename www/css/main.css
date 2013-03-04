@@ -27,6 +27,13 @@ form ul li {
 }
 
 
+textarea {
+    width:90%;
+}
+input, select {
+    width:50%;
+}
+
 
 
 
