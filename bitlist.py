@@ -1,4 +1,5 @@
 import webapp2, cgi, os, datetime, urllib, hashlib, logging
+import settings as bitsettings
 from xml.etree import ElementTree
 from google.appengine.api import users, mail
 from google.appengine.ext import ndb
@@ -6,35 +7,6 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from google.appengine.datastore.datastore_query import Cursor
-
-##
-# Site Name/URL and Email Suffix
-# These is used in a few places to construct strings required for the emails
-# email_suffix is used as the final piece of the contact_email when a post is created
-# site_url is used to construct URLs in the email text.
-##
-site_url = 'bitcoinlist.appspot.com'
-email_suffix = 'bitcoinlist.appspotmail.com'
-site_name = "Bitcoin List"
-# If changed here, the name should also be changed in: 
-# Site title in nav bar: nav.html   - <a class="brand">Bitcoin List</a>
-# Site title in browser: base.html  - <title>Bitcoin List</title>
-##  This is the email address that all emails will be sent from, it MUST be registered on GAE
-app_email_address = "connor.collins@gmail.com"
-
-
-##
-# OpenID Providers
-# This list allows you to enable or disable OpenID providers at will, by commenting or uncomenting the code
-# More options are available at https://developers.google.com/appengine/articles/openid but these are the majors.
-##
-providers = {
-    'Google'   : 'https://www.google.com/accounts/o8/id',
-    'Yahoo'    : 'yahoo.com',
-    #'MySpace'  : 'myspace.com',
-    #'AOL'      : 'aol.com',
-    #'MyOpenID' : 'myopenid.com'
-}
 
 ##
 # Helper Functions
@@ -50,7 +22,7 @@ def get_login_link_list(page_self, user):
         link_list = [link]
     else:
         link_list = []
-        for name, uri in providers.items():
+        for name, uri in bitsettings.providers.items():
             link = {}
             link['url'] = users.create_login_url(federated_identity=uri)
             link['name'] = name
@@ -70,12 +42,6 @@ def get_trader_posts(user, fetch=3):
 
 
 def get_global_template_vars(self, user=None, length=None):
-    
-
-
-
-
-
     template_values = {
             'link_list': get_login_link_list(self, user),
             'trader_posts': get_trader_posts(user, length),
@@ -124,24 +90,10 @@ class PostForm(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         if user:
-            categories = [{ "name" : "Looking to Work"  , "ID" : "employee" },
-                          { "name" : "Looking to Hire"  , "ID" : "employer" },
-                          { "name" : "Looking to Buy"   , "ID" : "buyer"    },
-                          { "name" : "Looking to Sell"  , "ID" : "seller"   },
-                          ]
-            subcategories = [{ "name" : "Web Design"            , "ID" : "webdesign" },
-                             { "name" : "Web Programming"       , "ID" : "webdev"    },
-                             { "name" : "Graphic Design"        , "ID" : "graphics"  },
-                             { "name" : "Hardware Design"       , "ID" : "hardware"  },
-                             { "name" : "Security"              , "ID" : "security"  },
-                             { "name" : "Misc. Scripts"         , "ID" : "scipts"    },
-                             { "name" : "Information Design"    , "ID" : "infodesign"},
-                             { "name" : "Game Development"      , "ID" : "gamedev"   },
-                            ]
             template_values = {
                 'gvalues': get_global_template_vars(self, user),
-                'categories': categories,
-                'subcategories': subcategories,
+                'categories': bitsettings.categories,
+                'subcategories': bitsettings.subcategories,
             }
             if self.request.get('postID'):
                 this_post = ndb.Key( urlsafe = self.request.get('postID') ).get()
@@ -169,7 +121,7 @@ class PostForm(webapp2.RequestHandler):
             contact = hashlib.md5()
             contact.update( str( datetime.datetime.now() ) + self.request.get('title') + self.request.get('price'))
             contact = contact.hexdigest()
-            post.contact = contact + "@" + email_suffix
+            post.contact = contact + "@" + bitsettings.email_suffix
             post.traderID = str(user.email())
         # These items can be edited post-creation, as the post page changes over time, 
         # this list should also change to include everything in the form
@@ -221,17 +173,14 @@ class PostView(webapp2.RequestHandler):
         }
         if not mail.is_email_valid(self.request.get("sender_email")):
             user = users.get_current_user()
-            template_values['status_message'] = "Your message had errors and was not sent.  Please enter a valid email address."
-
-            path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
-            self.response.out.write( template.render( path, template_values ))
+            template_values['status_message'] = bitsettings.email_not_sent
         else:
-            post_url = site_url + "/post?postID=" + this_post.postID
+            post_url = bitsettings.site_url + "/post?postID=" + this_post.postID
             
             ## get email from the email_text.xml file
             email = get_email_text("Post Reply")
             # compose the body of the message being sent
-            full_message = mail.EmailMessage(sender     = "%s <admin@%s>" % (site_name, email_suffix) ,
+            full_message = mail.EmailMessage(sender     = "%s <admin@%s>" % (bitsettings.site_name, bitsettings.email_suffix) ,
                                              subject    = "Reply to '%s'" % (this_post.title) ,
                                              to         = "%s <%s>" % (this_post.traderID.split('@')[0], this_post.traderID) ,
                                              reply_to   = self.request.get("sender_email") ,
@@ -241,10 +190,9 @@ class PostView(webapp2.RequestHandler):
                                              + "\n\n" + email.find('footer').text ,
             )
             full_message.send()
-            template_values['status_message'] = "Your message has been successfully sent."
-
-            path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
-            self.response.out.write( template.render( path, template_values ))
+            template_values['status_message'] = bitsettings.email_sent
+        path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
+        self.response.out.write( template.render( path, template_values ))
 
 class DeletePost(webapp2.RequestHandler):
     def get(self):
@@ -336,7 +284,7 @@ class EmailReceived(InboundMailHandler):
             email = get_email_text("Post Reply")
             
             for content_type, msg in email_messages:
-                full_message = mail.EmailMessage(sender     = "%s <admin@%s>" % (site_name, email_suffix) ,
+                full_message = mail.EmailMessage(sender     = "%s <admin@%s>" % (bitsettings.site_name, bitsettings.email_suffix) ,
                                                  subject    = "Reply to '%s'" % (this_post.title) ,
                                                  to         = "%s <%s>" % (email_to.split('@')[0], email_to) ,
                                                  reply_to   = message.sender ,
