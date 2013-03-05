@@ -44,6 +44,17 @@ input, select {
     width:50%;
 }
 
+.pull-right{
+    margin-top: 10px;
+}
+.pull-right a{
+    color: #999;
+    margin-right:4px;
+}
+.pull-right a:hover{
+    color: #fff;
+    text-decoration:none;
+}
 
 
 

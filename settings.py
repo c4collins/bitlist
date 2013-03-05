@@ -31,8 +31,8 @@ providers = {
 # These are not associated in any way, each post has one of each.
 ##
 
-categories = [  { "name" : "Looking for Work"   , "ID" : "employee" },
-                { "name" : "Hiring"             , "ID" : "employer" },
+categories = [  { "name" : "Hiring"             , "ID" : "employer" },
+                { "name" : "Looking for Work"   , "ID" : "employee" },
                 { "name" : "Buying"             , "ID" : "buyer"    },
                 { "name" : "Selling"            , "ID" : "seller"   },
                 ]
@@ -47,7 +47,7 @@ subcategories =[{ "name" : "Web Design"            , "ID" : "webdesign" },
                 ]
 
 ## This is the number of postes per category that are returned on the main page / category pages.
-main_fetch = 2
+main_fetch = 5
 
 
 

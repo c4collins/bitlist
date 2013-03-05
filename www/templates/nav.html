@@ -9,10 +9,10 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </a>
-            <a class="brand" href="/">Bitcoin List</a>
+            <a class="brand active" href="/">Bitcoin List</a>
             <div class="nav-collapse collapse">
                 <ul class="nav">
-                    <li class="active"><a href="/">Home</a></li>
+                    <li><a href="/">Home</a></li>
                     <li><a href="/post/edit">Make a Post</a></li>
                     {% if gvalues.link_list|length < 2 %}
                         <li class="dropdown">
@@ -33,7 +33,7 @@
                 </ul>
                 <form class="navbar-form pull-right">
                     {% for link in gvalues.link_list %}
-                        <a href="{{ link.url }}">{{ link.name }}</a>
+                        <a href="{{ link.url }}" >{{ link.name }}</a>
                     {% endfor %}
                 </form>
             </div><!--/.nav-collapse -->
