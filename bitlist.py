@@ -213,7 +213,7 @@ class PostView(webapp2.RequestHandler):
             email = get_email_text("Post Reply")
             # compose the body of the message being sent
             full_message = mail.EmailMessage(sender     = "%s <%s@%s>" % (bitsettings.site_name, bitsettings.email_local, bitsettings.email_suffix) ,
-                                             subject    = "%s %s - %s" % ( email_subject, this_post.title, str(this_post.price) ) ,
+                                             subject    = "%s %s - %s" % ( bitsettings.email_subject, this_post.title, str(this_post.price) ) ,
                                              to         = "%s <%s>" % (this_post.traderID.split('@')[0], this_post.traderID) ,
                                              reply_to   = self.request.get("sender_email") ,
                                              body       = email.find('header').text
