@@ -1,4 +1,4 @@
-import webapp2, cgi, os, datetime, urllib, hashlib, logging
+import webapp2, cgi, os, datetime, urllib, logging
 import settings as bitsettings
 from xml.etree import ElementTree
 from google.appengine.api import users, mail
@@ -66,13 +66,15 @@ def get_email_text(email_name):
 class MainPage(webapp2.RequestHandler):
     
     def get(self):
+        listings_query = {}
         user = users.get_current_user()
-
-        listings_query = Post.query().order(-Post.engage)     
-
+        for cat in bitsettings.categories:
+            listings_query[cat['ID']] = Post.query(Post.category==cat['ID']).order(-Post.engage).fetch(bitsettings.main_fetch)
         template_values = {
             'gvalues': get_global_template_vars(self, user, 10),
             'listings': listings_query,
+            'categories': bitsettings.categories,
+            'date': datetime.datetime.now(),
         }
 
         path = os.path.join( os.path.dirname(__file__), 'www/templates/main.html' )
@@ -118,10 +120,6 @@ class PostForm(webapp2.RequestHandler):
         else:
             # otherwise, create a new post, and add all the immutable details to it
             post = Post()
-            contact = hashlib.md5()
-            contact.update( str( datetime.datetime.now() ) + self.request.get('title') + self.request.get('price'))
-            contact = contact.hexdigest()
-            post.contact = contact + "@" + bitsettings.email_suffix
             post.traderID = str(user.email())
         # These items can be edited post-creation, as the post page changes over time, 
         # this list should also change to include everything in the form
@@ -136,6 +134,7 @@ class PostForm(webapp2.RequestHandler):
         if not post.postID:
             postID = post.put()
             post.postID = postID.urlsafe()
+            post.contact = post.postID + "@" + bitsettings.email_suffix
         # This either adds the post.postID to the entity if there wasn't one, or updates the edited fields otherwise
         post.put()
         
@@ -221,10 +220,7 @@ class TraderView(webapp2.RequestHandler):
             template_values = {
             'gvalues': get_global_template_vars(self, user),
             'nickname' : user.nickname(),
-            'email' : user.email(), 
-            'user_id' : user.user_id(), 
-            'user_fid' : user.federated_identity(), 
-            'user_prov' : user.federated_provider(),
+            'user_id' : user.user_id(),
         }
             path = os.path.join( os.path.dirname(__file__), 'www/templates/trader.html' )
         else:
@@ -255,6 +251,7 @@ class TraderPostView(webapp2.RequestHandler):
                 'posts' : posts,
                 'next' : next_cursor,
                 'more' : more,
+                'date' : datetime.datetime.now(),
             }
 
             path = os.path.join( os.path.dirname(__file__), 'www/templates/trader_posts.html' )
@@ -265,6 +262,38 @@ class TraderPostView(webapp2.RequestHandler):
             path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
         
         self.response.out.write( template.render( path, template_values ))
+
+##
+# Category View
+#
+##
+
+class CategoryView(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        if not self.request.get('category'):
+            self.redirect('/')
+        else:
+            category = self.request.get('category')
+            if self.request.get('subcategory'):
+                if user:
+                    template_values = {
+                    'gvalues': get_global_template_vars(self, user),
+                    'nickname' : user.nickname(),
+                    'email' : user.email(), 
+                    'user_id' : user.user_id(), 
+                    'user_fid' : user.federated_identity(), 
+                    'user_prov' : user.federated_provider(),
+                }
+                    path = os.path.join( os.path.dirname(__file__), 'www/templates/trader.html' )
+                else:
+                    template_values = {
+                    'gvalues': get_global_template_vars(self, user),
+                    }
+                    path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
+                
+
+                self.response.out.write( template.render( path, template_values ))
 
 ##
 # EmailReceived
@@ -308,6 +337,7 @@ class Post(ndb.Model):
     price = ndb.StringProperty()
     content = ndb.TextProperty()
     engage = ndb.DateTimeProperty(auto_now_add=True)    # datetime of inital post
+    edit = ndb.DateTimeProperty(auto_now=True)          # datetime of intial post & all edits
     contact = ndb.StringProperty()                      # public email attached to post
     category = ndb.StringProperty()
     subcategory = ndb.StringProperty()
@@ -328,6 +358,7 @@ app = webapp2.WSGIApplication( [( '/'             , MainPage ),
                                 ( '/post/edit/delete', DeletePost ),
                                 ( '/trader'       , TraderView ),
                                 ( '/trader/posts' , TraderPostView ),
+                                ( '/category'     , CategoryView ),
                                 ],
                             debug = True)
 

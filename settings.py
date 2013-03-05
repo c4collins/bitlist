@@ -36,6 +36,7 @@ categories = [  { "name" : "Looking to Work"  , "ID" : "employee" },
                 { "name" : "Looking to Buy"   , "ID" : "buyer"    },
                 { "name" : "Looking to Sell"  , "ID" : "seller"   },
                 ]
+# don't forget to update the main page if you change any of these categories
 subcategories =[{ "name" : "Web Design"            , "ID" : "webdesign" },
                 { "name" : "Web Programming"       , "ID" : "webdev"    },
                 { "name" : "Graphic Design"        , "ID" : "graphics"  },
@@ -44,6 +45,11 @@ subcategories =[{ "name" : "Web Design"            , "ID" : "webdesign" },
                 { "name" : "Information Design"    , "ID" : "infodesign"},
                 { "name" : "Game Development"      , "ID" : "gamedev"   },
                 ]
+
+## This is the number of postes per category that are returned on the main page.
+main_fetch = 10
+
+
 
 ##
 # Status Messages

@@ -3,15 +3,9 @@
 {% block content_container %}
     <div class="row">
         {% for post in posts %}
-        <div class="span12 single-post">
-            <a href="/post?postID={{ post.postID }}">
-                <h2>{{ post.title }}</h2>
-            </a>
-            <h3>{{ post.category }}</h3>
-            <h4>{{ post.subcategory }}</h4>
-            <h5>{{ post.price }}</h5>
-            <p>{{ post.content }}</p>
-        </div>
+            {% with post as listing %}
+                {% include "small_post.html" %}
+            {% endwith %}
         {% endfor %}    
     </div>
 <div class="row">

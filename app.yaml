@@ -20,6 +20,10 @@ handlers:
 - url: /img
   static_dir: www/img
 
+- url: /favicon.ico
+  static_files: www/favicon.ico
+  upload: www/favicon.ico
+
 - url: /_ah/mail/.+
   script: bitlist.email_handler
   login: admin
