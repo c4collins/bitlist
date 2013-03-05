@@ -8,10 +8,14 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from google.appengine.datastore.datastore_query import Cursor
 
+## Load custom template filters 
+register = template.register_template_library('tags.templatefilters')
+
 ##
 # Helper Functions
 # These functions would otherwise be repeated in multiple classes.
 ##
+
 
 def get_login_link_list(page_self, user):
     """Helper function to provide the proper login/logout links"""

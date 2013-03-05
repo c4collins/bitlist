@@ -2,46 +2,22 @@
 
 {% block content_container %}
     <div class="row">
-        {% if listings.buyer %}
-            <div class="span6">
-            <h2>Looking To Buy</h2>
-                {% for post_listing in listings.buyer %}
-                    {% with post_listing as listing %}
-                        {% include "small_post.html" %}
-                    {% endwith %}
-                {% endfor %}
-            </div>
+
+        {% for category in categories %}
+        {% if listings|keyvalue:category.ID %}
+        <div class="span6">
+            <h2><a href="/category?category={{ category.ID }}">{{ category.name }}</a></h2>
+
+            {% for post_listing in listings|keyvalue:category.ID %}
+                {% with post_listing as listing %}
+                    {% include "small_post.html" %}
+                {% endwith %}
+            {% endfor %}
+
+        </div>
         {% endif %}
-        {% if listings.seller %}
-            <div class="span6">
-                <h2>Looking To Sell</h2>
-                {% for post_listing in listings.seller %}
-                    {% with post_listing as listing %}
-                        {% include "small_post.html" %}
-                    {% endwith %}
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% if listings.employer %}
-            <div class="span6">
-                <h2>Looking To Hire</h2>
-                {% for post_listing in listings.employer %}
-                    {% with post_listing as listing %}
-                        {% include "small_post.html" %}
-                    {% endwith %}
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% if listings.employee %}
-            <div class="span6">
-                <h2>Looking For Work</h2>
-                {% for post_listing in listings.employee %}
-                    {% with post_listing as listing %}
-                        {% include "small_post.html" %}
-                    {% endwith %}
-                {% endfor %}
-            </div>
-        {% endif %}
+        {% endfor %}
+
     </div>
 {% endblock content_container %}
 
