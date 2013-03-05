@@ -246,7 +246,7 @@ class TraderPostView(webapp2.RequestHandler):
             user_id = user.email()
 
             cursor = Cursor(urlsafe=self.request.get('cursor'))
-            posts, next_cursor, more = Post.query(Post.traderID==user_id).order(-Post.engage).fetch_page(10, start_cursor=cursor)
+            posts, next_cursor, more = Post.query(Post.traderID==user_id).order(Post.subcategory).order(-Post.engage).fetch_page(10, start_cursor=cursor)
             if next_cursor != None:
                 next_cursor = next_cursor.urlsafe()
 
@@ -278,16 +278,19 @@ class CategoryView(webapp2.RequestHandler):
         if not self.request.get('category'):
             self.redirect('/')
         else:
+            category = self.request.get('category')
             if self.request.get('subcategory'):
-                listings = Post.query(Post.category==self.request.get('category'), Post.subcategory==self.request.get('subcategory')).order(-Post.engage).fetch(bitsettings.main_fetch)
+                subcategory = self.request.get('subcategory')
+                listings = Post.query(Post.category==category, Post.subcategory==subcategory).order(-Post.engage).fetch(bitsettings.main_fetch)
 
             else:
-                listings = Post.query(Post.category==self.request.get('category')).order(-Post.engage).fetch(bitsettings.main_fetch)
+                listings = Post.query(Post.category==category).order(Post.subcategory).order(-Post.engage).fetch(bitsettings.main_fetch)
 
             template_values = {
             'gvalues': get_global_template_vars(self, user),
             'posts': listings,
-            'date': datetime.datetime.now()
+            'date': datetime.datetime.now(),
+            'category': category,
             }
             path = os.path.join( os.path.dirname(__file__), 'www/templates/posts.html' )
                 

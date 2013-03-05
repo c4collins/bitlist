@@ -1,11 +1,25 @@
 {% extends "footer.html" %}
 
 {% block content_container %}
+
+{% regroup posts by subcategory as subcategory_list %}
     <div class="row">
-        {% for post in posts %}
-            {% with post as listing %}
-                {% include "small_post.html" %}
-            {% endwith %}
+        {% if subcategory_list|length > 1 %}
+            <div> Show only: 
+                {% for subcategory in subcategory_list %}
+                    <a href="/category?category={{ category }}&amp;subcategory={{ subcategory.grouper }}">{{ subcategory.grouper }}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% for subcategory in subcategory_list %}
+            <div class="span6">
+                <h1>{{ subcategory.grouper }}</h1>
+                {% for post in subcategory.list %}
+                    {% with post as listing %}
+                        {% include "small_post.html" %}
+                    {% endwith %}
+                {% endfor %}
+            </div>
         {% endfor %}    
     </div>
 <div class="row">

@@ -19,7 +19,29 @@ indexes:
 - kind: Post
   properties:
   - name: category
+  - name: engage
+    direction: desc
   - name: subcategory
+    direction: desc
+
+- kind: Post
+  properties:
+  - name: category
+  - name: subcategory
+  - name: engage
+    direction: desc
+
+- kind: Post
+  properties:
+  - name: category
+  - name: subcategory
+    direction: desc
+
+- kind: Post
+  properties:
+  - name: category
+  - name: subcategory
+    direction: desc
   - name: engage
     direction: desc
 
@@ -38,5 +60,12 @@ indexes:
 - kind: Post
   properties:
   - name: traderID
+  - name: engage
+    direction: desc
+
+- kind: Post
+  properties:
+  - name: traderID
+  - name: subcategory
   - name: engage
     direction: desc
