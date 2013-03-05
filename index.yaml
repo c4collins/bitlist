@@ -53,7 +53,31 @@ indexes:
 
 - kind: Post
   properties:
+  - name: engage
+    direction: desc
+  - name: subcategory
+
+- kind: Post
+  properties:
+  - name: engage
+    direction: desc
+  - name: subcategory
+    direction: desc
+
+- kind: Post
+  properties:
   - name: postID
+  - name: engage
+    direction: desc
+
+- kind: Post
+  properties:
+  - name: subcategory
+  - name: category
+
+- kind: Post
+  properties:
+  - name: subcategory
   - name: engage
     direction: desc
 

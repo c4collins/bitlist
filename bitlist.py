@@ -1,4 +1,4 @@
-import webapp2, cgi, os, datetime, urllib, logging
+import webapp2, os, datetime, urllib
 import settings as bitsettings
 from xml.etree import ElementTree
 from google.appengine.api import users, mail
@@ -18,13 +18,18 @@ register = template.register_template_library('tags.templatefilters')
 
 
 def get_login_link_list(page_self, user):
-    """Helper function to provide the proper login/logout links"""
+    """Helper function to provide the proper login/logout links.
+    Use like get_login_link_list(self, user).
+    This is taken care of via get_global_template_vars.
+    """
     if user:
+        # if there's a user we just need the logout link
         link = {}
         link['url'] = users.create_logout_url(page_self.request.uri)
         link['name'] = 'Logout'
         link_list = [link]
     else:
+        # otherwise generate a list of all the providers and their links.
         link_list = []
         for name, uri in bitsettings.providers.items():
             link = {}
@@ -35,26 +40,39 @@ def get_login_link_list(page_self, user):
     return link_list
 
 def get_trader_posts(user, fetch=3):
+    """Retrieves a list of the most recent posts made by the current user.
+    Use like get_trader_posts(user[, fetch]) where fetch is the number of posts to return.
+    Fetch defaults to 3.
+    This is taken care of via get_global_template_vars.
+    """
     if user:
-        user_id = user.email()
-        trader_post_query = Post.query(Post.traderID==user_id)
-        if fetch:
-            trader_post_query = trader_post_query.fetch(fetch)
+        trader_post_query = Post.query( Post.traderID == user.email() ).fetch(fetch)
         return trader_post_query
     else:
+        # if there's no user, there's no recent posts
         return None
 
 
-def get_global_template_vars(self, user=None, length=None):
+def get_global_template_vars(self, user=None, fetch=None):
+    """Gets the global variable values for use in the templates.
+    Use like get_global_template_vars(self[, user[, fetch]],
+    where the user and fetch both default to None (though fetch=None becomes fetch=3),
+    and fetch is the number of recent posts by the user to return in trader_posts.
+    """
     template_values = {
             'link_list': get_login_link_list(self, user),
-            'trader_posts': get_trader_posts(user, length),
+            'trader_posts': get_trader_posts(user, fetch),
             }
     return template_values
 
 
 
 def get_email_text(email_name):
+    """Retrieves the text of the email_name from the email_text.xml file.
+    This would be extremely easy to make generic, but it hasn't been needed yet so it isn't.
+    Use like get_email_text(email_name), where the email name is a string that matches one of the
+    emails in email_text.xml.  Of course, there's currently only one email, but that could easily change.
+    """
     xml_path = os.path.join( os.path.dirname(__file__), 'xml/email_text.xml' )
     tree = ElementTree.parse(xml_path)
     root = tree.getroot()
@@ -62,9 +80,9 @@ def get_email_text(email_name):
             if email.get('name') == email_name:
                 return email
 ##
-# MainPage & Associated Categories
-# The MainPage is to serve as basically just a listing of categories, and then maybe soem featured posts
-# Other Category classes are to serve as drill-down tools, and may not even exist.
+# MainPage
+# The MainPage is a listing of the 10 most recent posts in any subcategory in each of the categories.
+# Along with that, it provides links to the category pages.
 ##
 
 class MainPage(webapp2.RequestHandler):
@@ -72,8 +90,10 @@ class MainPage(webapp2.RequestHandler):
     def get(self):
         listings_query = {}
         user = users.get_current_user()
+
         for cat in bitsettings.categories:
             listings_query[cat['ID']] = Post.query(Post.category==cat['ID']).order(-Post.engage).fetch(bitsettings.main_fetch)
+
         template_values = {
             'gvalues': get_global_template_vars(self, user, 10),
             'listings': listings_query,
@@ -87,8 +107,8 @@ class MainPage(webapp2.RequestHandler):
 ##
 # Post, PostForm, and PostView form the basis of the listings side of the the application
 # Post is the data model (below)
-# PostForm is the create/update form
-# PostView is the publically-available post
+# PostForm is the create/update form.  If PostForm.get receives a valid postID parameter owned by the current user it edits the post, otherwise it creates a new post.
+# PostView is the publically-available post on a GET request, and when POSTed to (by itself via the email form), sends an email to the post's owner.
 # DeletePost simply removes the indicated object from the datastore
 ##
 
@@ -96,35 +116,44 @@ class PostForm(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         if user:
+
             template_values = {
                 'gvalues': get_global_template_vars(self, user),
                 'categories': bitsettings.categories,
                 'subcategories': bitsettings.subcategories,
             }
+
             if self.request.get('postID'):
                 this_post = ndb.Key( urlsafe = self.request.get('postID') ).get()
                 if this_post.traderID == str(user.email()):
+                    # Only let the post's creator edit a post
+                    # if this fails, a blank new-post form is loaded.
                     template_values["this_post"] = this_post
+
 
             path = os.path.join( os.path.dirname(__file__), 'www/templates/post_form.html' )
             self.response.out.write( template.render( path, template_values ))
         else:
+
             template_values = {
                 'gvalues': get_global_template_vars(self, user),
             }
+
             path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
             self.response.out.write( template.render( path, template_values ))
         
 
     def post(self):
         user = users.get_current_user()
+        
         if self.request.get('postID'):
-            # if the post exists (i.e. we're editing rather than creating), get that post
+            # if the post exists (i.e. we're editing rather than creating), retrieve the post from the datastore
             post = ndb.Key( urlsafe = self.request.get('postID') ).get()
         else:
             # otherwise, create a new post, and add all the immutable details to it
             post = Post()
             post.traderID = str(user.email())
+        
         # These items can be edited post-creation, as the post page changes over time, 
         # this list should also change to include everything in the form
         post.title = self.request.get('title')
@@ -133,30 +162,27 @@ class PostForm(webapp2.RequestHandler):
         post.content = self.request.get('content')
         post.category = self.request.get('category')
         post.subcategory = self.request.get('subcategory')
+        # note: post.engage and post.edit are not included here as they're auto_now_add and auto_now respectively
 
-   
         if not post.postID:
+            # if the post doesn't exist, create it, and assign the ID (which is the key) and the contact email (which is made of the key)
             postID = post.put()
             post.postID = postID.urlsafe()
             post.contact = post.postID + "@" + bitsettings.email_suffix
-        # This either adds the post.postID to the entity if there wasn't one, or updates the edited fields otherwise
+        # This either adds the post.postID/post.contact to the entity if they were just created, or updates the edited fields otherwise
         post.put()
-        
 
         self.redirect('/post?' + urllib.urlencode( {'postID' : post.postID } ) )
 
 
-
-
 class PostView(webapp2.RequestHandler):
     def get(self):
+
+        user = users.get_current_user()
         try:
             listing = ndb.Key( urlsafe = self.request.get('postID') ).get()
         except:
             listing = []
-        user = users.get_current_user()
-        
-
         template_values = {
             'gvalues': get_global_template_vars(self, user),
             'listing': listing,
@@ -165,7 +191,10 @@ class PostView(webapp2.RequestHandler):
         path = os.path.join( os.path.dirname(__file__), 'www/templates/post.html' )
         self.response.out.write( template.render( path, template_values ))
     
+    
     def post(self):
+        """Sends an email from the postView page to the post's owner via the on-page form.
+        """
         this_post = ndb.Key( urlsafe = self.request.get('postID') ).get()
         recipient_address = this_post.traderID
         user = users.get_current_user()
@@ -174,17 +203,17 @@ class PostView(webapp2.RequestHandler):
             'listing': this_post,
             'postID' : this_post.postID,
         }
+        
         if not mail.is_email_valid(self.request.get("sender_email")):
             user = users.get_current_user()
             template_values['status_message'] = bitsettings.email_not_sent
         else:
-            post_url = bitsettings.site_url + "/post?postID=" + this_post.postID
-            
+            post_url = bitsettings.site_url + "/post?postID=" + this_post.postID    
             ## get email from the email_text.xml file
             email = get_email_text("Post Reply")
             # compose the body of the message being sent
-            full_message = mail.EmailMessage(sender     = "%s <admin@%s>" % (bitsettings.site_name, bitsettings.email_suffix) ,
-                                             subject    = "Reply to '%s'" % (this_post.title) ,
+            full_message = mail.EmailMessage(sender     = "%s <%s@%s>" % (bitsettings.site_name, bitsettings.email_local, bitsettings.email_suffix) ,
+                                             subject    = "%s %s - %s" % ( email_subject, this_post.title, str(this_post.price) ) ,
                                              to         = "%s <%s>" % (this_post.traderID.split('@')[0], this_post.traderID) ,
                                              reply_to   = self.request.get("sender_email") ,
                                              body       = email.find('header').text
@@ -193,7 +222,9 @@ class PostView(webapp2.RequestHandler):
                                              + "\n\n" + email.find('footer').text ,
             )
             full_message.send()
+
             template_values['status_message'] = bitsettings.email_sent
+
         path = os.path.join( os.path.dirname(__file__), 'www/templates/post_status.html' )
         self.response.out.write( template.render( path, template_values ))
 
@@ -205,6 +236,7 @@ class DeletePost(webapp2.RequestHandler):
             post_key = ndb.Key( urlsafe = postID )
             this_post = post_key.get()
             if this_post.traderID == str(user.email()):
+                # if the trader and the post both exist, and the trader owns the post, then delete it.
                 post_key.delete()
 
         self.redirect('/trader')
@@ -228,6 +260,7 @@ class TraderView(webapp2.RequestHandler):
         }
             path = os.path.join( os.path.dirname(__file__), 'www/templates/trader.html' )
         else:
+            # You can't have a page if you aren't logged in.
             template_values = {
             'gvalues': get_global_template_vars(self, user),
             }
@@ -244,7 +277,7 @@ class TraderPostView(webapp2.RequestHandler):
 
         if user:
             user_id = user.email()
-
+            # the cursor is required for pagination, as are next_cursor and more
             cursor = Cursor(urlsafe=self.request.get('cursor'))
             posts, next_cursor, more = Post.query(Post.traderID==user_id).order(-Post.engage).fetch_page(10, start_cursor=cursor)
             if next_cursor != None:
@@ -260,6 +293,7 @@ class TraderPostView(webapp2.RequestHandler):
 
             path = os.path.join( os.path.dirname(__file__), 'www/templates/trader_posts.html' )
         else:
+            # You can't have posts if you aren't logged in.
             template_values = {
                 'gvalues': get_global_template_vars(self),
             }
@@ -275,42 +309,41 @@ class TraderPostView(webapp2.RequestHandler):
 class CategoryView(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
+        # this is the only place hwere I do this.  The template values get pretty messy below, this was I can just add them directly as I go.
+        template_values = {'gvalues': get_global_template_vars(self, user),}
         cursor = Cursor(urlsafe=self.request.get('cursor'))
+
         if not self.request.get('category'):
-            listings, next_cursor, more = Post.query().order(-Post.engage).fetch_page(bitsettings.main_fetch, start_cursor=cursor)
+            # if there's no category selected, load the most recent posts from any category
+            listings, next_cursor, more = Post.query().order(Post.subcategory).order(Post.category).fetch_page(bitsettings.main_fetch, start_cursor=cursor)
         else:
             category = self.request.get('category')
+            template_values['category'] = category
+            
             if self.request.get('subcategory'):
+                # if there's a subcategory specified, narrow the query
                 subcategory = self.request.get('subcategory')
                 listings, next_cursor, more = Post.query(Post.category==category, Post.subcategory==subcategory).order(-Post.engage).fetch_page(bitsettings.main_fetch, start_cursor=cursor)
-
             else:
                 listings, next_cursor, more = Post.query(Post.category==category).order(Post.subcategory).order(-Post.engage).fetch_page(bitsettings.main_fetch, start_cursor=cursor)
 
             if next_cursor != None:
                 next_cursor = next_cursor.urlsafe()
 
-            template_values = {
-            'gvalues': get_global_template_vars(self, user),
-            'posts': listings,
-            'next' : next_cursor,
-            'more' : more,
-            'date': datetime.datetime.now(),
-            'category': category,
-            }
-            path = os.path.join( os.path.dirname(__file__), 'www/templates/posts.html' )
-                
+        template_values['posts']=listings
+        template_values['next'] = next_cursor
+        template_values['more'] = more
+        template_values['date'] = datetime.datetime.now()
 
-            self.response.out.write( template.render( path, template_values ))
+        path = os.path.join( os.path.dirname(__file__), 'www/templates/posts.html' )
+        self.response.out.write( template.render( path, template_values ))
 
 ##
 # EmailReceived
-# This receives an email as a HTTP POST from any address, reformates it, and
-# forwards the message to the post's owner's real email address.
+# This acts as a receiver for all incoming email.  If the email matches the email for a post, the email is forarded to the post's owner.
 ##
 class EmailReceived(InboundMailHandler):
     def post(self):
-        #logging.info("Received a message from: ", mail_message.sender)
         message = mail.InboundEmailMessage(self.request.body)
         ## Get the traderID from the post based on the email address and "forward" the email
         this_post = Post.query(Post.contact==message.to).order(-Post.engage).get()
@@ -321,8 +354,8 @@ class EmailReceived(InboundMailHandler):
             email = get_email_text("Post Reply")
             
             for content_type, msg in email_messages:
-                full_message = mail.EmailMessage(sender     = "%s <admin@%s>" % (bitsettings.site_name, bitsettings.email_suffix) ,
-                                                 subject    = "Reply to '%s'" % (this_post.title) ,
+                full_message = mail.EmailMessage(sender     = "%s <%s@%s>" % (bitsettings.site_name, bitsettings.email_local, bitsettings.email_suffix) ,
+                                                 subject    = "%s %s - %s" % ( bitsettings.email_subject, this_post.title, str(this_post.price) ) ,
                                                  to         = "%s <%s>" % (email_to.split('@')[0], email_to) ,
                                                  reply_to   = message.sender ,
                                                  body       = email.find('header').text 

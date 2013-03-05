@@ -1,11 +1,15 @@
 ##
 # Site Name/URL and Email Suffix
 # These are used in a few places to construct strings required for the emails
-# email_suffix is used as the final piece of the contact_email when a post is created
 # site_url is used to construct URLs in the email text.
+# email_local is the local portion of the outgoing emails
+# email_suffix is used as the final piece of the contact_email when a post is created
+# email_subject precedes the title of the post that is being replied to in the subject of the email
 ##
 site_url = 'bitcoinlist.appspot.com'
+email_local = "admin"
 email_suffix = 'bitcoinlist.appspotmail.com'
+email_subject = "Reply To:" # i.e. "Reply To: Acoustic Guitar - 10.00000000"
 
 # If changed here, the name should also be changed in: 
 # Site title in nav bar: nav.html   - <a class="brand">Bitcoin List</a>
