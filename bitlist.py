@@ -254,7 +254,7 @@ class TraderPostView(webapp2.RequestHandler):
                 'date' : datetime.datetime.now(),
             }
 
-            path = os.path.join( os.path.dirname(__file__), 'www/templates/trader_posts.html' )
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/posts.html' )
         else:
             template_values = {
                 'gvalues': get_global_template_vars(self),
@@ -274,26 +274,21 @@ class CategoryView(webapp2.RequestHandler):
         if not self.request.get('category'):
             self.redirect('/')
         else:
-            category = self.request.get('category')
             if self.request.get('subcategory'):
-                if user:
-                    template_values = {
-                    'gvalues': get_global_template_vars(self, user),
-                    'nickname' : user.nickname(),
-                    'email' : user.email(), 
-                    'user_id' : user.user_id(), 
-                    'user_fid' : user.federated_identity(), 
-                    'user_prov' : user.federated_provider(),
-                }
-                    path = os.path.join( os.path.dirname(__file__), 'www/templates/trader.html' )
-                else:
-                    template_values = {
-                    'gvalues': get_global_template_vars(self, user),
-                    }
-                    path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
+                listings = Post.query(Post.category==self.request.get('category'), Post.subcategory==self.request.get('subcategory')).order(-Post.engage).fetch(bitsettings.main_fetch)
+
+            else:
+                listings = Post.query(Post.category==self.request.get('category')).order(-Post.engage).fetch(bitsettings.main_fetch)
+
+            template_values = {
+            'gvalues': get_global_template_vars(self, user),
+            'posts': listings,
+            'date': datetime.datetime.now()
+            }
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/posts.html' )
                 
 
-                self.response.out.write( template.render( path, template_values ))
+            self.response.out.write( template.render( path, template_values ))
 
 ##
 # EmailReceived

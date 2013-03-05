@@ -2,46 +2,46 @@
 
 {% block content_container %}
     <div class="row">
-        <div class="span6">
-            {% if listings.buyer %}
-                <h2>Looking To Buy</h2>
+        {% if listings.buyer %}
+            <div class="span6">
+            <h2>Looking To Buy</h2>
                 {% for post_listing in listings.buyer %}
                     {% with post_listing as listing %}
                         {% include "small_post.html" %}
                     {% endwith %}
                 {% endfor %}
-            {% endif %}
-        </div>
-        <div class="span6">
-            {% if listings.seller %}
+            </div>
+        {% endif %}
+        {% if listings.seller %}
+            <div class="span6">
                 <h2>Looking To Sell</h2>
                 {% for post_listing in listings.seller %}
                     {% with post_listing as listing %}
                         {% include "small_post.html" %}
                     {% endwith %}
                 {% endfor %}
-            {% endif %}
-        </div>
-        <div class="span6">
-            {% if listings.employer %}
+            </div>
+        {% endif %}
+        {% if listings.employer %}
+            <div class="span6">
                 <h2>Looking To Hire</h2>
                 {% for post_listing in listings.employer %}
                     {% with post_listing as listing %}
                         {% include "small_post.html" %}
                     {% endwith %}
                 {% endfor %}
-            {% endif %}
-        </div>
-        <div class="span6">
-            {% if listings.employee %}
-                <h2>Looking To Work</h2>
+            </div>
+        {% endif %}
+        {% if listings.employee %}
+            <div class="span6">
+                <h2>Looking For Work</h2>
                 {% for post_listing in listings.employee %}
                     {% with post_listing as listing %}
                         {% include "small_post.html" %}
                     {% endwith %}
                 {% endfor %}
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
     </div>
 {% endblock content_container %}
 

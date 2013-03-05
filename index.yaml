@@ -18,6 +18,13 @@ indexes:
 
 - kind: Post
   properties:
+  - name: category
+  - name: subcategory
+  - name: engage
+    direction: desc
+
+- kind: Post
+  properties:
   - name: contact
   - name: engage
     direction: desc
