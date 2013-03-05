@@ -12,7 +12,7 @@
             </div>
         {% endif %}
         {% for subcategory in subcategory_list %}
-            <div class="span6">
+            <div class="span12">
                 <h1>{{ subcategory.grouper }}</h1>
                 {% for post in subcategory.list %}
                     {% with post as listing %}
@@ -25,7 +25,11 @@
 <div class="row">
         <div class="span12">
             {% if more and next %}
-            <a href="/trader/posts?cursor={{ next }}">More...</a>
+                {% if subcategory_list|length <= 1 %}
+                    {% for subcategory in subcategory_list %}
+                        <a href="/category?category={{ category }}&amp;subcategory={{ subcategory.grouper }}&amp;cursor={{ next }}">More...</a>
+                    {% endfor %}
+                {% endif %}
             {% endif %}
         </div>
     </div>

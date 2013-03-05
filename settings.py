@@ -46,8 +46,8 @@ subcategories =[{ "name" : "Web Design"            , "ID" : "webdesign" },
                 { "name" : "Game Development"      , "ID" : "gamedev"   },
                 ]
 
-## This is the number of postes per category that are returned on the main page.
-main_fetch = 10
+## This is the number of postes per category that are returned on the main page / category pages.
+main_fetch = 2
 
 
 

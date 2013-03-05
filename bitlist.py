@@ -246,7 +246,7 @@ class TraderPostView(webapp2.RequestHandler):
             user_id = user.email()
 
             cursor = Cursor(urlsafe=self.request.get('cursor'))
-            posts, next_cursor, more = Post.query(Post.traderID==user_id).order(Post.subcategory).order(-Post.engage).fetch_page(10, start_cursor=cursor)
+            posts, next_cursor, more = Post.query(Post.traderID==user_id).order(-Post.engage).fetch_page(10, start_cursor=cursor)
             if next_cursor != None:
                 next_cursor = next_cursor.urlsafe()
 
@@ -258,7 +258,7 @@ class TraderPostView(webapp2.RequestHandler):
                 'date' : datetime.datetime.now(),
             }
 
-            path = os.path.join( os.path.dirname(__file__), 'www/templates/posts.html' )
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/trader_posts.html' )
         else:
             template_values = {
                 'gvalues': get_global_template_vars(self),
@@ -275,20 +275,26 @@ class TraderPostView(webapp2.RequestHandler):
 class CategoryView(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
+        cursor = Cursor(urlsafe=self.request.get('cursor'))
         if not self.request.get('category'):
-            self.redirect('/')
+            listings, next_cursor, more = Post.query().order(-Post.engage).fetch_page(bitsettings.main_fetch, start_cursor=cursor)
         else:
             category = self.request.get('category')
             if self.request.get('subcategory'):
                 subcategory = self.request.get('subcategory')
-                listings = Post.query(Post.category==category, Post.subcategory==subcategory).order(-Post.engage).fetch(bitsettings.main_fetch)
+                listings, next_cursor, more = Post.query(Post.category==category, Post.subcategory==subcategory).order(-Post.engage).fetch_page(bitsettings.main_fetch, start_cursor=cursor)
 
             else:
-                listings = Post.query(Post.category==category).order(Post.subcategory).order(-Post.engage).fetch(bitsettings.main_fetch)
+                listings, next_cursor, more = Post.query(Post.category==category).order(Post.subcategory).order(-Post.engage).fetch_page(bitsettings.main_fetch, start_cursor=cursor)
+
+            if next_cursor != None:
+                next_cursor = next_cursor.urlsafe()
 
             template_values = {
             'gvalues': get_global_template_vars(self, user),
             'posts': listings,
+            'next' : next_cursor,
+            'more' : more,
             'date': datetime.datetime.now(),
             'category': category,
             }
