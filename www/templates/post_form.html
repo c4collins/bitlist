@@ -48,10 +48,6 @@
                         </select>
                     </li>
                     <li>
-                        <label for="location">Location</label>
-                        <input type="text" name="location" default="Digital" {% if this_post %}value="{{ this_post.location }}"{% endif %}>
-                    </li>
-                    <li>
                         <label for="price">Price (In BTC)</label>
                         <input type="number" name="price" min="0" max="100" step="0.00000001" {% if this_post %}value="{{ this_post.price }}"{% endif %} required>
                     </li>

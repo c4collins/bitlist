@@ -35,10 +35,10 @@ providers = {
 # These are not associated in any way, each post has one of each.
 ##
 
-categories = [  { "name" : "Hiring"             , "ID" : "employer" },
-                { "name" : "Looking for Work"   , "ID" : "employee" },
-                { "name" : "Buying"             , "ID" : "buyer"    },
-                { "name" : "Selling"            , "ID" : "seller"   },
+categories = [  { "name" : "Looking to Hire"            , "ID" : "employer" },
+                { "name" : "Looking for Work"           , "ID" : "employee" },
+                { "name" : "Looking to Buy"             , "ID" : "buyer"    },
+                { "name" : "Looking to Sell"            , "ID" : "seller"   },
                 ]
 # don't forget to update the main page if you change any of these categories
 subcategories =[{ "name" : "Web Design"            , "ID" : "webdesign" },
@@ -46,12 +46,12 @@ subcategories =[{ "name" : "Web Design"            , "ID" : "webdesign" },
                 { "name" : "Graphic Design"        , "ID" : "graphics"  },
                 { "name" : "Hardware Design"       , "ID" : "hardware"  },
                 { "name" : "Security"              , "ID" : "security"  },
-                { "name" : "Information Design"    , "ID" : "infodesign"},
                 { "name" : "Game Development"      , "ID" : "gamedev"   },
                 ]
 
 ## This is the number of postes per category that are returned on the main page / category pages.
 main_fetch = 5
+category_fetch = 10
 
 
 

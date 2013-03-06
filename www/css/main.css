@@ -25,6 +25,13 @@ form ul li {
 .single-post h5{
     float:right;
     margin:0;
+    width:100px;
+    text-align: right;
+}
+
+.single-post .btn{
+    float:right;
+    margin:5px;
 }
 
 .single-post .bottom-bar{

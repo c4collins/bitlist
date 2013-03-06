@@ -315,7 +315,7 @@ class CategoryView(webapp2.RequestHandler):
 
         if not self.request.get('category'):
             # if there's no category selected, load the most recent posts from any category
-            listings, next_cursor, more = Post.query().order(Post.subcategory).order(Post.category).fetch_page(bitsettings.main_fetch, start_cursor=cursor)
+            listings, next_cursor, more = Post.query().order(Post.subcategory).order(Post.category).fetch_page(bitsettings.category_fetch, start_cursor=cursor)
         else:
             category = self.request.get('category')
             template_values['category'] = category
@@ -323,9 +323,9 @@ class CategoryView(webapp2.RequestHandler):
             if self.request.get('subcategory'):
                 # if there's a subcategory specified, narrow the query
                 subcategory = self.request.get('subcategory')
-                listings, next_cursor, more = Post.query(Post.category==category, Post.subcategory==subcategory).order(-Post.engage).fetch_page(bitsettings.main_fetch, start_cursor=cursor)
+                listings, next_cursor, more = Post.query(Post.category==category, Post.subcategory==subcategory).order(-Post.engage).fetch_page(bitsettings.category_fetch, start_cursor=cursor)
             else:
-                listings, next_cursor, more = Post.query(Post.category==category).order(Post.subcategory).order(-Post.engage).fetch_page(bitsettings.main_fetch, start_cursor=cursor)
+                listings, next_cursor, more = Post.query(Post.category==category).order(Post.subcategory).order(-Post.engage).fetch_page(bitsettings.category_fetch, start_cursor=cursor)
 
             if next_cursor != None:
                 next_cursor = next_cursor.urlsafe()
@@ -374,7 +374,6 @@ class Post(ndb.Model):
     postID = ndb.StringProperty()                       # URL-safe NDB key
     traderID = ndb.StringProperty()                     # OpenID email of user who posted
     title = ndb.StringProperty()
-    location = ndb.StringProperty()
     price = ndb.StringProperty()
     content = ndb.TextProperty()
     engage = ndb.DateTimeProperty(auto_now_add=True)    # datetime of inital post

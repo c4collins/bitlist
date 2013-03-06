@@ -5,7 +5,7 @@
     <div class="row">
         <div class="span7 single-post">
             <h2><a href="/post?postID={{ listing.postID }}">{{ listing.title }}</a></h2>
-            <h5>{{ listing.price }}</h5>
+            <h5>{{ listing.price|floatformat:8 }} BTC</h5>
             <a href="mailto:{{ listing.contact }}?Subject={{ listing.title }}">
                 {{ listing.contact }}
             </a>
