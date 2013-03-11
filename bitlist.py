@@ -15,6 +15,16 @@ register = template.register_template_library('tags.templatefilters')
 # Helper Functions
 # These functions would otherwise be repeated in multiple classes.
 ##
+def get_category_list():
+    category_dict = {}
+    for category in bitsettings.categories:
+        if Post.query( Post.category == category['ID'] ):
+            subcategory_list = []
+            for subcategory in bitsettings.subcategories:
+                if Post.query( Post.subcategory == subcategory['ID'], Post.category == category['ID'] ):
+                    subcategory_list.append(subcategory['name'])
+            category_dict[category['name']] = subcategory_list
+    return category_dict
 
 
 def get_login_link_list(page_self, user):
@@ -62,6 +72,9 @@ def get_global_template_vars(self, user=None, fetch=None):
     template_values = {
             'link_list': get_login_link_list(self, user),
             'trader_posts': get_trader_posts(user, fetch),
+            'category_list': get_category_list(),
+            'categories': bitsettings.categories,
+            'subcategories': bitsettings.subcategories,
             }
     return template_values
 
@@ -97,7 +110,6 @@ class MainPage(webapp2.RequestHandler):
         template_values = {
             'gvalues': get_global_template_vars(self, user, 10),
             'listings': listings_query,
-            'categories': bitsettings.categories,
             'date': datetime.datetime.now(),
         }
 
@@ -119,8 +131,6 @@ class PostForm(webapp2.RequestHandler):
 
             template_values = {
                 'gvalues': get_global_template_vars(self, user),
-                'categories': bitsettings.categories,
-                'subcategories': bitsettings.subcategories,
             }
 
             if self.request.get('postID'):
@@ -153,12 +163,12 @@ class PostForm(webapp2.RequestHandler):
             # otherwise, create a new post, and add all the immutable details to it
             post = Post()
             post.traderID = str(user.email())
-        
+    
         # These items can be edited post-creation, as the post page changes over time, 
         # this list should also change to include everything in the form
         post.title = self.request.get('title')
         post.location = self.request.get('location')
-        post.price = "%.8f" % float(self.request.get('price'))
+        post.price = "%.8g" % float(self.request.get('price'))
         post.content = self.request.get('content')
         post.category = self.request.get('category')
         post.subcategory = self.request.get('subcategory')

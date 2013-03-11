@@ -15,7 +15,6 @@ form ul li {
     padding-left: 6px;
     padding-right: 6px;
     border: 1px solid #DDD;
-    width:100%;
 }
 
 .single-post h2, .single-post h3, .single-post h4, .single-post h5{
@@ -38,6 +37,37 @@ form ul li {
     border-top: dotted black 1px;
     font-family: monospace;
 }
+
+.post-form input, .post-form select{
+    width:90%;
+}
+
+.post-form .row{
+    position:relative;
+}
+
+
+
+.post-reply {
+    margin-left:10px;
+}
+
+.post-reply label{
+    padding:0 4px;
+    float:left;
+}
+
+.post-reply input{
+    clear:left;
+    width:90%;
+}
+.post-reply form ul, .post-form ul{
+    margin:0;
+}
+.post-form .btn, .post-reply .btn {
+    margin-left:8px;
+}
+
 
 .bottom-bar .date{
     float:right;
@@ -64,8 +94,9 @@ input, select {
 }
 
 
-
-
+footer a{
+    float:right;
+}
 
 
 

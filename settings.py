@@ -35,10 +35,10 @@ providers = {
 # These are not associated in any way, each post has one of each.
 ##
 
-categories = [  { "name" : "Looking to Hire"            , "ID" : "employer" },
-                { "name" : "Looking for Work"           , "ID" : "employee" },
-                { "name" : "Looking to Buy"             , "ID" : "buyer"    },
-                { "name" : "Looking to Sell"            , "ID" : "seller"   },
+categories = [  { "name" : "Looking to Hire"      , "ID" : "employer" },
+                { "name" : "Looking to Work"      , "ID" : "employee" },
+                { "name" : "Looking to Buy"       , "ID" : "buyer"    },
+                { "name" : "Looking to Sell"      , "ID" : "seller"   },
                 ]
 # don't forget to update the main page if you change any of these categories
 subcategories =[{ "name" : "Web Design"            , "ID" : "webdesign" },

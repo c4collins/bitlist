@@ -3,7 +3,7 @@
 {% block content_container %}
     <div class="row">
 
-        {% for category in categories %}
+        {% for category in gvalues.categories %}
         {% if listings|keyvalue:category.ID %}
         <div class="span6">
             <h2><a href="/category?category={{ category.ID }}">{{ category.name }}</a></h2>

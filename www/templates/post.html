@@ -3,12 +3,9 @@
 {% block content_container %}
     {% block status_message %}{% endblock status_message %}
     <div class="row">
-        <div class="span7 single-post">
+        <div class="span8 single-post">
             <h2><a href="/post?postID={{ listing.postID }}">{{ listing.title }}</a></h2>
             <h5>{{ listing.price|floatformat:8 }} BTC</h5>
-            <a href="mailto:{{ listing.contact }}?Subject={{ listing.title }}">
-                {{ listing.contact }}
-            </a>
             {% if listing.content %}
                 <pre>{{ listing.content }}</pre>
             <h5>{{ post.price }}</h5>
@@ -16,7 +13,7 @@
                 <b>The post you have requested does not currently exist.</b>
             {% endif %}
         </div>
-        <div class="span5">
+        <div class="span4 post-reply">
             <form action="/post?postID={{ listing.postID }}" method="post">
                 <ul>
                     <li>
@@ -25,14 +22,14 @@
                     </li>
                     <li>
                         <label for="sender_email">Email</label>
-                        <input type="email" name="sender_email" default="Digital" required>
+                        <input type="email" name="sender_email" placeholder="Email Address" required>
                     </li>
                     <li>
-                        <label for="sender_message">Message to Trader:</label>
+                        <label for="sender_message">Message to Trader</label>
                         <textarea name="sender_message" rows="10" cols="240" required></textarea>
                     </li>
                     <li>
-                        <input type="submit" value="Send Email" class="btn btn-primary btn-large">
+                        <input type="submit" value="Send Message" class="btn btn-primary btn-large">
                     </li>
                 </ul>
             </form>
