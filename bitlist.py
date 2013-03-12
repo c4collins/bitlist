@@ -319,7 +319,8 @@ class TraderPostView(webapp2.RequestHandler):
 class CategoryView(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
-        # this is the only place hwere I do this.  The template values get pretty messy below, this was I can just add them directly as I go.
+        # This is the only place where I do this sooner rather than later.  
+        # The template values get messy below, this allows the values to be assigned on the fly.
         template_values = {'gvalues': get_global_template_vars(self, user),}
         cursor = Cursor(urlsafe=self.request.get('cursor'))
 

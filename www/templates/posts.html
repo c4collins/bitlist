@@ -13,7 +13,7 @@
         {% endif %}
         {% for subcategory in subcategory_list %}
             <div class="span12">
-                <h1>{{ subcategory.grouper }}</h1>
+                <h1><a href="/category?category={{ category }}&amp;subcategory={{ subcategory.grouper }}">{{ subcategory.grouper }}</a></h1>
                 {% for post in subcategory.list %}
                     {% with post as listing %}
                         {% include "small_post.html" %}
