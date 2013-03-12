@@ -1,4 +1,4 @@
-import webapp2, os, datetime, urllib
+import webapp2, os, datetime, urllib, operator
 import settings as bitsettings
 from xml.etree import ElementTree
 from google.appengine.api import users, mail
@@ -334,16 +334,19 @@ class CategoryView(webapp2.RequestHandler):
             if self.request.get('subcategory'):
                 # if there's a subcategory specified, narrow the query
                 subcategory = self.request.get('subcategory')
-                listings, next_cursor, more = Post.query(Post.category==category, Post.subcategory==subcategory).order(-Post.engage).fetch_page(bitsettings.category_fetch, start_cursor=cursor)
+                posts, next_cursor, more = Post.query(Post.category==category, Post.subcategory==subcategory).order(-Post.engage).fetch_page(bitsettings.category_fetch, start_cursor=cursor)
+                if next_cursor != None:
+                    next_cursor = next_cursor.urlsafe()
+                template_values['next'] = next_cursor
+                template_values['more'] = more
             else:
-                listings, next_cursor, more = Post.query(Post.category==category).order(Post.subcategory).order(-Post.engage).fetch_page(bitsettings.category_fetch, start_cursor=cursor)
-
-            if next_cursor != None:
-                next_cursor = next_cursor.urlsafe()
-
-        template_values['posts']=listings
-        template_values['next'] = next_cursor
-        template_values['more'] = more
+                listings = []
+                for subcategory in bitsettings.subcategories:
+                    query = Post.query(Post.category==category, Post.subcategory==subcategory["ID"]).order(-Post.engage).order(Post.subcategory).fetch(bitsettings.category_fetch//2)
+                    for post in query:
+                        listings.append(post)
+                posts = sorted(listings, key=operator.attrgetter('subcategory'), reverse=False)
+        template_values['posts'] = posts
         template_values['date'] = datetime.datetime.now()
 
         path = os.path.join( os.path.dirname(__file__), 'www/templates/posts.html' )
