@@ -8,7 +8,7 @@
             <h5>{{ listing.price|floatformat:8 }} BTC</h5>
             <br/><h4>{{ gvalues.categories|cat_name:listing.category }} - {{ gvalues.subcategories|cat_name:listing.subcategory }}</h4>
             {% if listing.content %}
-                <pre>{{ listing.content }}</pre>
+                <p>{{ listing.content|linebreaks }}</p>
             <h5>{{ post.price }}</h5>
             {% else %}
                 <b>The post you have requested does not currently exist.</b>

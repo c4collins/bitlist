@@ -17,11 +17,10 @@
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">Browse<b class="caret"></b></a>
                         <ul class="dropdown-menu">
                             {% for category in gvalues.category_list %}
+                            <li><a href="/category?category={{ category|keyvalue:"nav" }}">{{ category|keyvalue:"category" }}</a></li>
                                 {% for subcategory in category|keyvalue:"subcategory_list" %}
                                     <li><a href="/category?category={{ category|keyvalue:"nav" }}&subcategory={{ subcategory }}">
-                                        {{ category|keyvalue:"category" }}
-                                         - 
-                                        {{ gvalues.subcategories|cat_name:subcategory }}
+                                        &nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;{{ gvalues.subcategories|cat_name:subcategory }}
                                     </a></li>
                                 {% endfor %}
                             {% endfor %}

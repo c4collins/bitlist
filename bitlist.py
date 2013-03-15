@@ -1,7 +1,7 @@
 import webapp2, os, datetime, urllib, operator
 import settings as bitsettings
 from xml.etree import ElementTree
-from google.appengine.api import users, mail
+from google.appengine.api import users, mail, search
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -16,6 +16,7 @@ register = template.register_template_library('tags.templatefilters')
 # These functions would otherwise be repeated in multiple classes.
 ##
 def get_category_list():
+    """Returns a list of the categories and subcategory combinations that currently have posts."""
     category_list = []
     for category in bitsettings.categories:
         category_list.append( { 'nav': category['ID'], 
@@ -181,6 +182,8 @@ class PostForm(webapp2.RequestHandler):
             post.contact = post.postID + "@" + bitsettings.email_suffix
         # This either adds the post.postID/post.contact to the entity if they were just created, or updates the edited fields otherwise
         post.put()
+        search.Index(name="posts").put( CreateDocument(post.title, post.content) )
+
 
         self.redirect('/post?' + urllib.urlencode( {'postID' : post.postID } ) )
 
@@ -247,7 +250,10 @@ class DeletePost(webapp2.RequestHandler):
             this_post = post_key.get()
             if this_post.traderID == str(user.email()):
                 # if the trader and the post both exist, and the trader owns the post, then delete it.
+                post_index = search.Index(name="posts")
+                #$$ the post needs to be removed from the index when it's deleted.
                 post_key.delete()
+
 
         self.redirect('/trader')
         
@@ -378,6 +384,18 @@ class EmailReceived(InboundMailHandler):
                                                  + "\n\n" + email.find('footer').text ,
                 )
                 full_message.send()
+
+##
+# Search Documents
+# https://developers.google.com/appengine/docs/python/search/overview
+##
+def CreateDocument(title, content):
+    return search.Document(
+        fields=[search.TextField( name='title'  , value=title ),
+                search.TextField( name='content', value=content ),
+                search.DateField( name='date'   , value=datetime.datetime.now().date() )
+        ])
+
 
 ##
 # Data Models
