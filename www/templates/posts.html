@@ -5,7 +5,7 @@
 {% regroup posts by subcategory as subcategory_list %}
     <div class="row">
         {% if subcategory_list|length > 1 %}
-            <div class="span2"> Show only: 
+            <div class="span2" style="float:right;"> Show only: 
                 {% for subcategory in subcategory_list %}
                      <br/><a href="/category?category={{ category }}&amp;subcategory={{ subcategory.grouper }}">{{ gvalues.subcategories|cat_name:subcategory.grouper }}</a>
                 {% endfor %}

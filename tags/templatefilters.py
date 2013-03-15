@@ -12,3 +12,4 @@ def cat_name(list, key):
     for dict in list:
         if key == dict['ID']:
             return dict['name']
+    return None

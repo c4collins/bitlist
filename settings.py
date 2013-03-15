@@ -41,6 +41,7 @@ categories = [  { "name" : "Looking to Hire"      , "ID" : "employer" },
                 { "name" : "Looking to Sell"      , "ID" : "seller"   },
                 ]
 # don't forget to update the main page if you change any of these categories
+
 subcategories =[{ "name" : "Web Design"            , "ID" : "webdesign" },
                 { "name" : "Web Programming"       , "ID" : "webdev"    },
                 { "name" : "Graphic Design"        , "ID" : "graphics"  },
@@ -49,9 +50,10 @@ subcategories =[{ "name" : "Web Design"            , "ID" : "webdesign" },
                 { "name" : "Game Development"      , "ID" : "gamedev"   },
                 ]
 
-## This is the number of postes per category that are returned on the main page / category pages.
+## This is the number of posts per category that are returned on the respective pages.
 main_fetch = 5
 category_fetch = 10
+search_per_page = 10 
 
 
 

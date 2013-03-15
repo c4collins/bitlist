@@ -1,4 +1,4 @@
-import webapp2, os, datetime, urllib, operator
+import webapp2, os, datetime, urllib, operator, logging
 import settings as bitsettings
 from xml.etree import ElementTree
 from google.appengine.api import users, mail, search
@@ -168,7 +168,6 @@ class PostForm(webapp2.RequestHandler):
         # These items can be edited post-creation, as the post page changes over time, 
         # this list should also change to include everything in the form
         post.title = self.request.get('title')
-        post.location = self.request.get('location')
         post.price = "%.8g" % float(self.request.get('price'))
         post.content = self.request.get('content')
         post.category = self.request.get('category')
@@ -182,7 +181,13 @@ class PostForm(webapp2.RequestHandler):
             post.contact = post.postID + "@" + bitsettings.email_suffix
         # This either adds the post.postID/post.contact to the entity if they were just created, or updates the edited fields otherwise
         post.put()
-        search.Index(name="posts").put( CreateDocument(post.title, post.content) )
+        try:
+            search.Index(name="posts").put( CreatePostDocument(
+                                                    post.title, 
+                                                    post.content,  
+                                                    post.postID ) )
+        except search.Error:
+            pass
 
 
         self.redirect('/post?' + urllib.urlencode( {'postID' : post.postID } ) )
@@ -251,6 +256,7 @@ class DeletePost(webapp2.RequestHandler):
             if this_post.traderID == str(user.email()):
                 # if the trader and the post both exist, and the trader owns the post, then delete it.
                 post_index = search.Index(name="posts")
+                post_index.delete(postID)
                 #$$ the post needs to be removed from the index when it's deleted.
                 post_key.delete()
 
@@ -389,12 +395,61 @@ class EmailReceived(InboundMailHandler):
 # Search Documents
 # https://developers.google.com/appengine/docs/python/search/overview
 ##
-def CreateDocument(title, content):
-    return search.Document(
+def CreatePostDocument(title, content, postID):
+    return search.Document(doc_id=postID,
         fields=[search.TextField( name='title'  , value=title ),
-                search.TextField( name='content', value=content ),
-                search.DateField( name='date'   , value=datetime.datetime.now().date() )
+                search.TextField( name='content', value=content )
         ])
+##
+# SearchResults
+# 
+##
+
+class SearchResults(webapp2.RequestHandler):
+    def get(self):
+        if self.request.get('q'):
+            query = str(self.request.get('q'))
+        else:
+            query = ""
+
+        if self.request.get('cursor'):
+            cursor = self.request.get('cursor')
+        else:
+            cursor = search.Cursor()
+
+        query_options = search.QueryOptions(
+            limit=bitsettings.search_per_page,
+            cursor=cursor,
+            sort_options=None
+            )
+
+
+        query_obj = search.Query(query_string=query, options=query_options)
+        results = search.Index(name="posts").search(query=query_obj)
+        posts = []
+
+        for doc in results:
+            logging.info(doc)
+            logging.info(doc.doc_id)
+            logging.info(ndb.Key( urlsafe = doc.doc_id ))
+            if ndb.Key( urlsafe = doc.doc_id ).get():
+                this_post = ndb.Key( urlsafe = doc.doc_id ).get()
+                posts.append(this_post)
+
+        if users.get_current_user():
+            user = users.get_current_user()
+            template_values = { 'gvalues': get_global_template_vars(self, user), }
+        else:
+            template_values = { 'gvalues': get_global_template_vars(self), }
+
+        template_values['posts'] = posts           
+        template_values['date'] = datetime.datetime.now()
+
+        path = os.path.join( os.path.dirname(__file__), 'www/templates/search_results.html' )
+        
+        self.response.out.write( template.render( path, template_values ))
+
+
 
 
 ##
@@ -405,7 +460,7 @@ def CreateDocument(title, content):
 class Post(ndb.Model):
     postID = ndb.StringProperty()                       # URL-safe NDB key
     traderID = ndb.StringProperty()                     # OpenID email of user who posted
-    title = ndb.StringProperty()
+    title = ndb.TextProperty()
     price = ndb.StringProperty()
     content = ndb.TextProperty()
     engage = ndb.DateTimeProperty(auto_now_add=True)    # datetime of inital post
@@ -431,6 +486,7 @@ app = webapp2.WSGIApplication( [( '/'             , MainPage ),
                                 ( '/trader'       , TraderView ),
                                 ( '/trader/posts' , TraderPostView ),
                                 ( '/category'     , CategoryView ),
+                                ( '/search'       , SearchResults ),
                                 ],
                             debug = True)
 
