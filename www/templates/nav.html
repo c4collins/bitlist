@@ -18,7 +18,7 @@
                         <ul class="dropdown-menu">
                             {% for category in gvalues.category_list %}
                                 {% for subcategory in category|keyvalue:"subcategory_list" %}
-                                    <li><a href="/category?category={{ category|keyvalue:"category" }}&subcategory={{ subcategory }}">
+                                    <li><a href="/category?category={{ category|keyvalue:"nav" }}&subcategory={{ subcategory }}">
                                         {{ category|keyvalue:"category" }}
                                          - 
                                         {{ gvalues.subcategories|cat_name:subcategory }}

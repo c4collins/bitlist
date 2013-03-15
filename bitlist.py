@@ -18,7 +18,11 @@ register = template.register_template_library('tags.templatefilters')
 def get_category_list():
     category_list = []
     for category in bitsettings.categories:
-        category_list.append( { 'category': category['name'], 'subcategory_list' : [query_result.subcategory for query_result in Post.query( Post.category == category['ID'] )] } )
+        category_list.append( { 'nav': category['ID'], 
+                                'category': category['name'], 
+                                'subcategory_list' : set( 
+                                    [  query_result.subcategory for query_result in Post.query( Post.category == category['ID'] )  ]    
+                                ) } )
 
     return category_list
 
