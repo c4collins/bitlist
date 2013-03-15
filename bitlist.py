@@ -16,15 +16,11 @@ register = template.register_template_library('tags.templatefilters')
 # These functions would otherwise be repeated in multiple classes.
 ##
 def get_category_list():
-    category_dict = {}
+    category_list = []
     for category in bitsettings.categories:
-        if Post.query( Post.category == category['ID'] ):
-            subcategory_list = []
-            for subcategory in bitsettings.subcategories:
-                if Post.query( Post.subcategory == subcategory['ID'], Post.category == category['ID'] ):
-                    subcategory_list.append(subcategory['name'])
-            category_dict[category['name']] = subcategory_list
-    return category_dict
+        category_list.append( { 'category': category['name'], 'subcategory_list' : [query_result.subcategory for query_result in Post.query( Post.category == category['ID'] )] } )
+
+    return category_list
 
 
 def get_login_link_list(page_self, user):

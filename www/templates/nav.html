@@ -13,12 +13,26 @@
             <div class="nav-collapse collapse">
                 <ul class="nav">
                     <li><a href="/">Home</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Browse<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            {% for category in gvalues.category_list %}
+                                {% for subcategory in category|keyvalue:"subcategory_list" %}
+                                    <li><a href="/category?category={{ category|keyvalue:"category" }}&subcategory={{ subcategory }}">
+                                        {{ category|keyvalue:"category" }}
+                                         - 
+                                        {{ gvalues.subcategories|cat_name:subcategory }}
+                                    </a></li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </li>
                     <li><a href="/post/edit">Make a Post</a></li>
                     {% if gvalues.link_list|length < 2 %}
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Account<b class="caret"></b></a>
                             <ul class="dropdown-menu">
-                                <li><a href="/trader">Profile{{ globalval.a }}</a></li>
+                                <li><a href="/trader">Profile</a></li>
                                 {% if gvalues.trader_posts %}
                                     <li class="divider"></li>
                                     <li class="nav-header">Recent Posts</li>

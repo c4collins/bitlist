@@ -6,7 +6,7 @@
         <div class="span8 single-post">
             <h2><a href="/post?postID={{ listing.postID }}">{{ listing.title }}</a></h2>
             <h5>{{ listing.price|floatformat:8 }} BTC</h5>
-            <br/><h4>{{ listing.category }} - {{ listing.subcategory }}</h4>
+            <br/><h4>{{ gvalues.categories|cat_name:listing.category }} - {{ gvalues.subcategories|cat_name:listing.subcategory }}</h4>
             {% if listing.content %}
                 <pre>{{ listing.content }}</pre>
             <h5>{{ post.price }}</h5>

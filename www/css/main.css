@@ -38,8 +38,12 @@ form ul li {
     font-family: monospace;
 }
 
-.post-form input, .post-form select{
+.post-form input{
     width:90%;
+}
+
+.post-form select{
+    width:93%;
 }
 
 .post-form .row{
@@ -76,9 +80,6 @@ form ul li {
 
 textarea {
     width:90%;
-}
-input, select {
-    width:50%;
 }
 
 .pull-right{

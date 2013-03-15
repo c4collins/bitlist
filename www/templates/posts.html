@@ -5,15 +5,19 @@
 {% regroup posts by subcategory as subcategory_list %}
     <div class="row">
         {% if subcategory_list|length > 1 %}
-            <div> Show only: 
+            <div class="span2"> Show only: 
                 {% for subcategory in subcategory_list %}
-                    <a href="/category?category={{ category }}&amp;subcategory={{ subcategory.grouper }}">{{ subcategory.grouper }}</a>
+                     <br/><a href="/category?category={{ category }}&amp;subcategory={{ subcategory.grouper }}">{{ gvalues.subcategories|cat_name:subcategory.grouper }}</a>
                 {% endfor %}
             </div>
         {% endif %}
         {% for subcategory in subcategory_list %}
-            <div class="span6">
-                <h1><a href="/category?category={{ category }}&amp;subcategory={{ subcategory.grouper }}">{{ subcategory.grouper }}</a></h1>
+            {% if subcategory_list|length <= 1 %}
+                <div class="span12">
+            {% else %}
+                <div class="span5">
+            {% endif %}
+                <h1><a href="/category?category={{ category }}&amp;subcategory={{ subcategory.grouper }}">{{ gvalues.subcategories|cat_name:subcategory.grouper }}</a></h1>
                 {% for post in subcategory.list %}
                     {% with post as listing %}
                         {% include "small_post.html" %}
