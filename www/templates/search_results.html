@@ -1,23 +1,74 @@
 {% extends "footer.html" %}
 
 {% block content_container %}
-
     <div class="row">
-        {% if posts|length >= 1 %}
-            {% for listing in posts %}
-            <div class="span6">
-                {% include "small_post.html" %}
-            </div>
+        <form action="/search" method="get" class="query_categories">
+            <input name="q" class="textbox" placeholder="  search" value="{{ query }}">
+            <select name="category">
+                <option value="{{ category }}">
+                    {% if category %}
+                        {{ gvalues.categories|cat_name:category }}
+                    {% else %}
+                        Categories
+                    {% endif %}
+                </option>
+            {% for category in gvalues.categories %}
+                <option value="{{ category.ID }}">{{ category.name }}</option>
             {% endfor %}
-        {% else %}
-            <p>There are no more matches for query: {{ query }}.</p>
+                <option value="">None</option>
+            </select>
+            <select name="subcategory">
+                <option value="{{ subcategory }}">
+                    {% if subcategory %}
+                        {{ gvalues.subcategories|cat_name:subcategory }}
+                    {% else %}
+                        Subcategories
+                    {% endif %}
+                </option>
+            {% for category in gvalues.subcategories %}
+                <option value="{{ category.ID }}">{{ category.name }}</option>
+            {% endfor %}
+                <option value="">None</option>
+            </select>            
+            <input type="submit" value="Search" class="btn" btn-primary"">
+        </form>
+        <form action="/search" method="get" class="query_categories">
+            <input name="q" value="" type="hidden">
+            <input type="submit" value="Reset" class="btn" btn-primary"">
+        </form>
+    </div>
+    <div class="row">
+    {% if posts|length >= 1 %}
+        {% if query %}
+            <p>Matches for query: <strong>{{ query }}</strong>
+            {% if category %}
+                category: <strong>{{ gvalues.categories|cat_name:category }}</strong>
+            {% endif %}
+            {% if subcategory %}
+                subcategory: <strong>{{ gvalues.subcategories|cat_name:subcategory }}</strong>
+            {% endif %}
+            </p>
         {% endif %}
+        {% for listing in posts %}
+        <div class="span6">
+            {% include "small_post.html" %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>There are no more matches for query: {{ query }} 
+        {% if category %}
+            category: {{ gvalues.categories|cat_name:category }}
+        {% endif %}
+        {% if subcategory %}
+            subcategory: {{ gvalues.subcategories|cat_name:subcategory }}
+        {% endif %}</p>
+    {% endif %}
     </div>
     <div class="row">
         <div class="span12">
-            {% if not end %}
-                <a href="/search?q={{ query }}&p={{ next }}">More...</a>
-            {% endif %}
+        {% if not end %}
+            <a href="/search?q={{ query }}&p={{ next }}">More...</a>
+        {% endif %}
         </div>
     </div>
 

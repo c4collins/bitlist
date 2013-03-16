@@ -185,7 +185,10 @@ class PostForm(webapp2.RequestHandler):
             search.Index(name="posts").put( CreatePostDocument(
                                                     post.title, 
                                                     post.content,  
-                                                    post.postID ) )
+                                                    post.postID,
+                                                    post.category,
+                                                    post.subcategory,
+                                                    post.price ) )
         except search.Error:
             pass
 
@@ -395,10 +398,13 @@ class EmailReceived(InboundMailHandler):
 # Search Documents
 # https://developers.google.com/appengine/docs/python/search/overview
 ##
-def CreatePostDocument(title, content, postID):
+def CreatePostDocument(title, content, postID, category, subcategory, price):
     return search.Document(doc_id=postID,
         fields=[search.TextField( name='title'  , value=title ),
-                search.TextField( name='content', value=content )
+                search.TextField( name='content', value=content ),
+                search.AtomField( name='category', value=category ),
+                search.AtomField( name='subcategory', value=subcategory ),
+                search.NumberField( name='price', value=float(price) )
         ])
 ##
 # SearchResults
@@ -412,10 +418,23 @@ class SearchResults(webapp2.RequestHandler):
         else:
             query = ""
 
+        q=query ## The query is modified below, so q is the original query string
+
         if self.request.get('p'):
             cursor = search.Cursor(web_safe_string=self.request.get('p'))
         else:
             cursor = search.Cursor()
+
+        template_values = {}
+
+        if self.request.get('category'):
+            category = self.request.get('category')
+            query += " category:%s" % category
+            template_values['category'] = category
+        if self.request.get('subcategory'):
+            subcategory = self.request.get('subcategory')
+            query += " subcategory:%s" % subcategory
+            template_values['subcategory'] = subcategory
 
         query_options = search.QueryOptions(
             limit=bitsettings.search_per_page,
@@ -434,9 +453,9 @@ class SearchResults(webapp2.RequestHandler):
 
         if users.get_current_user():
             user = users.get_current_user()
-            template_values = { 'gvalues': get_global_template_vars(self, user), }
+            template_values['gvalues'] = get_global_template_vars(self, user)
         else:
-            template_values = { 'gvalues': get_global_template_vars(self), }
+            template_values['gvalues'] = get_global_template_vars(self)
 
         template_values['posts'] = posts           
         template_values['date'] = datetime.datetime.now()
@@ -445,7 +464,7 @@ class SearchResults(webapp2.RequestHandler):
             logging.info(template_values['next'])
         except AttributeError:
             template_values['end'] = True
-        template_values['query'] = query
+        template_values['query'] = q
 
         path = os.path.join( os.path.dirname(__file__), 'www/templates/search_results.html' )
         

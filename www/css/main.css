@@ -79,7 +79,7 @@ form ul li {
 
 
 textarea {
-    width:90%;
+    width:90%; 
 }
 
 
@@ -100,7 +100,15 @@ textarea {
 }
 .navbar-search .btn {
     line-height: 16px;
-    margin-top:0px;
+    margin-top: 0px;
+}
+
+.query_categories{
+    display:inline-block;
+}
+
+.query_categories select{
+    margin-bottom:0px;
 }
 
 footer a{
