@@ -39,7 +39,7 @@
     </div>
     <div class="row">
     {% if posts|length >= 1 %}
-        {% if query %}
+        {% if query or category or subcategory%}
             <p>Matches for query: <strong>{{ query }}</strong>
             {% if category %}
                 category: <strong>{{ gvalues.categories|cat_name:category }}</strong>

@@ -106,9 +106,12 @@ textarea {
 .query_categories{
     display:inline-block;
 }
-
-.query_categories select{
+.query_categories .textbox{
+    margin-left: 30px;
+} 
+.query_categories input, .query_categories select{
     margin-bottom:0px;
+    margin-left: 10px;
 }
 
 footer a{
