@@ -15,7 +15,7 @@
                             <div class="span5">
                                 <li>
                                     <label for="price">Price (In BTC)</label>
-                                    <input type="number" name="price" min="0" max="100" step="0.001" {% if this_post %}value="{{ this_post.price }}"{% endif %} required>
+                                    <input type="number" name="price" min="0" max="100" step="0.00000001" {% if this_post %}value="{{ this_post.price }}"{% endif %} required>
                                 </li>
                                 
                             </div>

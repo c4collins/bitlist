@@ -254,10 +254,10 @@ class DeletePost(webapp2.RequestHandler):
             post_key = ndb.Key( urlsafe = postID )
             this_post = post_key.get()
             if this_post.traderID == str(user.email()):
-                # if the trader and the post both exist, and the trader owns the post, then delete it.
+                # if the trader and the post both exist, and the trader owns the post
+                # they have the authority, so delete it and remove it from the index.
                 post_index = search.Index(name="posts")
                 post_index.delete(postID)
-                #$$ the post needs to be removed from the index when it's deleted.
                 post_key.delete()
 
 
@@ -412,8 +412,8 @@ class SearchResults(webapp2.RequestHandler):
         else:
             query = ""
 
-        if self.request.get('cursor'):
-            cursor = self.request.get('cursor')
+        if self.request.get('p'):
+            cursor = search.Cursor(web_safe_string=self.request.get('p'))
         else:
             cursor = search.Cursor()
 
@@ -429,12 +429,8 @@ class SearchResults(webapp2.RequestHandler):
         posts = []
 
         for doc in results:
-            logging.info(doc)
-            logging.info(doc.doc_id)
-            logging.info(ndb.Key( urlsafe = doc.doc_id ))
-            if ndb.Key( urlsafe = doc.doc_id ).get():
-                this_post = ndb.Key( urlsafe = doc.doc_id ).get()
-                posts.append(this_post)
+            this_post = ndb.Key( urlsafe = doc.doc_id ).get()
+            posts.append(this_post)
 
         if users.get_current_user():
             user = users.get_current_user()
@@ -444,6 +440,12 @@ class SearchResults(webapp2.RequestHandler):
 
         template_values['posts'] = posts           
         template_values['date'] = datetime.datetime.now()
+        try:
+            template_values['next'] = results.cursor.web_safe_string
+            logging.info(template_values['next'])
+        except AttributeError:
+            template_values['end'] = True
+        template_values['query'] = query
 
         path = os.path.join( os.path.dirname(__file__), 'www/templates/search_results.html' )
         

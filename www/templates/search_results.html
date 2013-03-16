@@ -10,8 +10,15 @@
             </div>
             {% endfor %}
         {% else %}
-            <p>No results.</p>
+            <p>There are no more matches for query: {{ query }}.</p>
         {% endif %}
+    </div>
+    <div class="row">
+        <div class="span12">
+            {% if not end %}
+                <a href="/search?q={{ query }}&p={{ next }}">More...</a>
+            {% endif %}
+        </div>
     </div>
 
 {% endblock content_container %}

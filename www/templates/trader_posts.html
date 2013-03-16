@@ -10,7 +10,7 @@
     </div>
     <div class="row">
         <div class="span12">
-            {% if more and next %}
+            {% if next and more %}
                 <a href="/trader/posts?cursor={{ next }}">More...</a>
             {% endif %}
         </div>
