@@ -430,11 +430,11 @@ class SearchResults(webapp2.RequestHandler):
         if self.request.get('category'):
             category = self.request.get('category')
             query += " category:%s" % category
-            template_values['category'] = category
+            template_values['query_category'] = category
         if self.request.get('subcategory'):
             subcategory = self.request.get('subcategory')
             query += " subcategory:%s" % subcategory
-            template_values['subcategory'] = subcategory
+            template_values['query_subcategory'] = subcategory
 
         query_options = search.QueryOptions(
             limit=bitsettings.search_per_page,
