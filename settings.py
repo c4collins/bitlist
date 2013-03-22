@@ -53,7 +53,8 @@ subcategories =[{ "name" : "Web Design"            , "ID" : "webdesign" },
 ## This is the number of posts per category that are returned on the respective pages.
 main_fetch = 5
 category_fetch = 10
-search_per_page = 10 
+search_per_page = 10
+trader_fetch = 10
 
 
 

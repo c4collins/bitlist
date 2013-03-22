@@ -50,10 +50,10 @@ def get_login_link_list(page_self, user):
 
     return link_list
 
-def get_trader_posts(user, fetch=3):
+def get_trader_posts(user, fetch=bitsettings.trader_fetch):
     """Retrieves a list of the most recent posts made by the current user.
     Use like get_trader_posts(user[, fetch]) where fetch is the number of posts to return.
-    Fetch defaults to 3.
+    Fetch defaults to bitsettings.trader_fetch.
     This is taken care of via get_global_template_vars.
     """
     if user:
@@ -67,7 +67,7 @@ def get_trader_posts(user, fetch=3):
 def get_global_template_vars(self, user=None, fetch=None):
     """Gets the global variable values for use in the templates.
     Use like get_global_template_vars(self[, user[, fetch]],
-    where the user and fetch both default to None (though fetch=None becomes fetch=3),
+    where the user and fetch both default to None (though fetch=None becomes fetch=bitsettings.trader_fetch),
     and fetch is the number of recent posts by the user to return in trader_posts.
     """
     template_values = {
@@ -278,8 +278,10 @@ class TraderView(webapp2.RequestHandler):
         user = users.get_current_user()
 
         if user:
+                  
             template_values = {
             'gvalues': get_global_template_vars(self, user),
+            'saved_queries' : SavedQuery.query( SavedQuery.userID == user.user_id() ),
             'nickname' : user.nickname(),
             'user_id' : user.user_id(),
         }
@@ -298,13 +300,12 @@ class TraderView(webapp2.RequestHandler):
 
 class TraderPostView(webapp2.RequestHandler):
     def get(self):
-        user = users.get_current_user()
-
-        if user:
+        if users.get_current_user():
+            user = users.get_current_user()
             user_id = user.email()
             # the cursor is required for pagination, as are next_cursor and more
             cursor = Cursor(urlsafe=self.request.get('cursor'))
-            posts, next_cursor, more = Post.query(Post.traderID==user_id).order(-Post.engage).fetch_page(10, start_cursor=cursor)
+            posts, next_cursor, more = Post.query(Post.traderID==user_id).order(-Post.engage).fetch_page(bitsettings.trader_fetch, start_cursor=cursor)
             if next_cursor != None:
                 next_cursor = next_cursor.urlsafe()
 
@@ -394,21 +395,11 @@ class EmailReceived(InboundMailHandler):
                 )
                 full_message.send()
 
+
 ##
-# Search Documents
-# https://developers.google.com/appengine/docs/python/search/overview
-##
-def CreatePostDocument(title, content, postID, category, subcategory, price):
-    return search.Document(doc_id=postID,
-        fields=[search.TextField( name='title'  , value=title ),
-                search.TextField( name='content', value=content ),
-                search.AtomField( name='category', value=category ),
-                search.AtomField( name='subcategory', value=subcategory ),
-                search.NumberField( name='price', value=float(price) )
-        ])
-##
-# SearchResults
-# 
+# SearchResults & SearchMemory
+# SearchResults handles the search page functions
+# SearchMemory handles the saved searches (and presumably the alerts)
 ##
 
 class SearchResults(webapp2.RequestHandler):
@@ -470,8 +461,61 @@ class SearchResults(webapp2.RequestHandler):
         
         self.response.out.write( template.render( path, template_values ))
 
+class SearchMemory(webapp2.RequestHandler):
+    def post(self):
+
+        if users.get_current_user():
+            user = users.get_current_user()
+            user_id = user.user_id()
+            
+            query = self.request.get('q') if self.request.get('q') else ""
+            category = self.request.get('category')
+            subcategory = self.request.get('subcategory')
+
+            if (query or category or subcategory):
+                
+                query_to_save = SavedQuery()
+                query_to_save.populate(userID = user_id,
+                                            q = query,
+                                     category = category,
+                                  subcategory = subcategory,
+                                         name = "" )
+                query_to_save.put()
 
 
+            url_query = urllib.urlencode( {'q' : query } )
+            if category or subcategory:
+                url_query += "&"
+            if category:
+                url_query += urllib.urlencode( {'category' : category } )
+                if subcategory:
+                    url_query += "&"
+            if subcategory:
+                url_query += urllib.urlencode( {'subcategory' : subcategory } )
+            ## So picky!!
+            self.redirect('/search?'  + url_query)
+
+        else:
+            # You can't save a search if you aren't logged in.
+            template_values = {
+                'gvalues': get_global_template_vars(self),
+            }
+            path = os.path.join( os.path.dirname(__file__), 'www/templates/not_logged_in.html' )
+        
+            self.response.out.write( template.render( path, template_values ))
+
+##
+# Search Documents
+# https://developers.google.com/appengine/docs/python/search/overview
+##
+def CreatePostDocument(title, content, postID, category, subcategory, price):
+    return search.Document(doc_id=postID,
+        fields=[search.TextField( name='title'  , value=title ),
+                search.TextField( name='content', value=content ),
+                search.AtomField( name='category', value=category ),
+                search.AtomField( name='subcategory', value=subcategory ),
+                search.NumberField( name='price', value=float(price) )
+        ])
 
 ##
 # Data Models
@@ -490,7 +534,13 @@ class Post(ndb.Model):
     category = ndb.StringProperty()
     subcategory = ndb.StringProperty()
 
-
+class SavedQuery(ndb.Model):    
+    userID = ndb.StringProperty()
+    q = ndb.StringProperty()
+    category = ndb.StringProperty()
+    subcategory = ndb.StringProperty()
+    name = ndb.StringProperty()
+    search_date = ndb.DateTimeProperty(auto_now=True)
 
 
 ##
@@ -507,7 +557,8 @@ app = webapp2.WSGIApplication( [( '/'             , MainPage ),
                                 ( '/trader'       , TraderView ),
                                 ( '/trader/posts' , TraderPostView ),
                                 ( '/category'     , CategoryView ),
-                                ( '/search'       , SearchResults ),
+                                ( '/search'       , SearchResults ),                                
+                                ( '/search/save'  , SearchMemory ),
                                 ],
                             debug = True)
 

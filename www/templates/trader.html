@@ -9,7 +9,7 @@
     </div>
    
     <div class="row">
-        <div class="span12">
+        <div class="span6">
             <h2>Recent Posts</h2>
             {% for post in gvalues.trader_posts %}
                 <div class="single-post">
@@ -22,6 +22,19 @@
             {% endfor %}
             {% if gvalues.trader_posts|length < 1 %}
                 <h4>No posts yet!</h4>
+            {% endif %}
+        </div>
+        <div class="span6">
+            <h3>Saved Searches</h3>
+            {% for post in saved_queries %}
+                <div class="single-post">
+                    <a href="/search?q={{ post.q }}{% if post.category %}&amp;category={{ post.category }}{% endif %}{% if post.subcategory %}&amp;subcategory={{ post.subcategory }}{% endif %}">
+                        <h2>{% if post.q %}{{ post.q }}{% if post.q and post.category or post.subcategory %} - {% endif %}{% endif %}{% if post.category %}{{ gvalues.categories|cat_name:post.category }}{% if post.subcategory %} - {% endif %}{% endif %}{% if post.subcategory %}{{ gvalues.subcategories|cat_name:post.subcategory }}{% endif %}</h2>
+                    </a>
+                </div>
+            {% endfor %}
+            {% if saved_queries|length < 1 %}
+                <h4>No queries have been saved yet!</h4>
             {% endif %}
         </div>
     </div>

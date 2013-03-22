@@ -24,11 +24,21 @@
             {% endfor %}
                 <option value="">None</option>
             </select>            
-            <input type="submit" value="Search" class="btn" btn-primary"">
+            <input type="submit" value="Search" class="btn">
         </form>
         <form action="/search" method="get" class="query_categories">
             <input name="q" value="" type="hidden">
-            <input type="submit" value="Reset" class="btn" btn-primary"">
+            <input type="submit" value="Clear" class="btn">
+        </form>
+        <form action="/search/save" method="post" class="query_categories">
+            <input name="q" value="{{ query }}" type="hidden">
+            {% if query_category %}
+            <input name="category" value="{{ query_category }}" type="hidden">
+            {% endif %}
+            {% if query_subcategory %}
+            <input name="subcategory" value="{{ query_subcategory }}" type="hidden">
+            {% endif %}
+            <input type="submit" value="Save Search" class="btn">
         </form>
     </div>
     <div class="row">
