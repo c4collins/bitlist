@@ -28,9 +28,22 @@
             <h3>Saved Searches</h3>
             {% for post in saved_queries %}
                 <div class="single-post">
-                    <a href="/search?q={{ post.q }}{% if post.category %}&amp;category={{ post.category }}{% endif %}{% if post.subcategory %}&amp;subcategory={{ post.subcategory }}{% endif %}">
-                        <h2>{% if post.q %}{{ post.q }}{% if post.q and post.category or post.subcategory %} - {% endif %}{% endif %}{% if post.category %}{{ gvalues.categories|cat_name:post.category }}{% if post.subcategory %} - {% endif %}{% endif %}{% if post.subcategory %}{{ gvalues.subcategories|cat_name:post.subcategory }}{% endif %}</h2>
-                    </a>
+
+                        <h5><a class="btn" href="/search?q={{ post.q }}{% if post.category %}&amp;category={{ post.category }}{% endif %}{% if post.subcategory %}&amp;subcategory={{ post.subcategory }}{% endif %}">Search</a></h5>
+
+                        <p>{% if post.q %}
+                            Query : <strong>{{ post.q }}</strong>
+                            {% if post.q and post.category or post.subcategory %}<br />{% endif %}
+                        {% endif %}
+                        {% if post.category %}
+                            Category : <strong>{{ gvalues.categories|cat_name:post.category }}</strong>
+                            {% if post.subcategory %}<br />{% endif %}
+                        {% endif %}
+                        {% if post.subcategory %}
+                            Subcategory : <strong>{{ gvalues.subcategories|cat_name:post.subcategory }}</strong>
+                        {% endif %}
+                        </p>
+                    <div class="clear">&nbsp;</div>
                 </div>
             {% endfor %}
             {% if saved_queries|length < 1 %}

@@ -8,6 +8,10 @@ html {overflow-y: scroll;}
 form ul li {
     list-style-type: none;
 }
+.clear{
+    clear:both;
+    height:0px;
+}
 
 .single-post{
     background: #EEE;
