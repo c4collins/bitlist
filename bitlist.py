@@ -281,7 +281,7 @@ class TraderView(webapp2.RequestHandler):
                   
             template_values = {
             'gvalues': get_global_template_vars(self, user),
-            'saved_queries' : SavedQuery.query( SavedQuery.userID == user.user_id() ),
+            'saved_queries' : SavedQuery.query( SavedQuery.userID == user.user_id() ).order( -SavedQuery.search_date ),
             'nickname' : user.nickname(),
             'user_id' : user.user_id(),
         }
@@ -462,6 +462,16 @@ class SearchResults(webapp2.RequestHandler):
         self.response.out.write( template.render( path, template_values ))
 
 class SearchMemory(webapp2.RequestHandler):
+    def get(self):
+        if users.get_current_user():
+            user = users.get_current_user()
+            user_id = user.user_id()
+            query_key = self.request.get('ID')
+            match = ndb.Key(urlsafe=query_key).get()
+            if match.userID == user_id:
+                ndb.Key(urlsafe=query_key).delete()
+        self.redirect('/trader')
+
     def post(self):
 
         if users.get_current_user():
@@ -480,20 +490,11 @@ class SearchMemory(webapp2.RequestHandler):
                                      category = category,
                                   subcategory = subcategory,
                                          name = "" )
+                query_to_save.queryID = query_to_save.put().urlsafe()
                 query_to_save.put()
 
 
-            url_query = urllib.urlencode( {'q' : query } )
-            if category or subcategory:
-                url_query += "&"
-            if category:
-                url_query += urllib.urlencode( {'category' : category } )
-                if subcategory:
-                    url_query += "&"
-            if subcategory:
-                url_query += urllib.urlencode( {'subcategory' : subcategory } )
-            ## So picky!!
-            self.redirect('/search?'  + url_query)
+            self.redirect('/trader')
 
         else:
             # You can't save a search if you aren't logged in.
@@ -536,6 +537,7 @@ class Post(ndb.Model):
 
 class SavedQuery(ndb.Model):    
     userID = ndb.StringProperty()
+    queryID = ndb.StringProperty()
     q = ndb.StringProperty()
     category = ndb.StringProperty()
     subcategory = ndb.StringProperty()
@@ -558,7 +560,7 @@ app = webapp2.WSGIApplication( [( '/'             , MainPage ),
                                 ( '/trader/posts' , TraderPostView ),
                                 ( '/category'     , CategoryView ),
                                 ( '/search'       , SearchResults ),                                
-                                ( '/search/save'  , SearchMemory ),
+                                ( '/search/memory', SearchMemory ),
                                 ],
                             debug = True)
 

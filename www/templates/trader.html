@@ -2,15 +2,15 @@
 
 {% block content_container %}
     <div class="row">
-        <div class="span12">
-            <h1>{{ nickname }}</h1>
+        <div class="span12">            
             <h6>UserID: {{ user_id }}</h6>
+            <h1>{{ nickname }}</h1>
         </div>
     </div>
    
     <div class="row">
         <div class="span6">
-            <h2>Recent Posts</h2>
+            <h3>Recent Posts</h3>
             {% for post in gvalues.trader_posts %}
                 <div class="single-post">
                     <a href="/post?postID={{ post.postID }}"><h2>{{ post.title }}</h2></a>
@@ -26,21 +26,22 @@
         </div>
         <div class="span6">
             <h3>Saved Searches</h3>
-            {% for post in saved_queries %}
+            {% for query in saved_queries %}
                 <div class="single-post">
+                        {% if query.q %}<p class="search-query">
+                            {{ query.q }}
+                        </p>{% endif %}
 
-                        <h5><a class="btn" href="/search?q={{ post.q }}{% if post.category %}&amp;category={{ post.category }}{% endif %}{% if post.subcategory %}&amp;subcategory={{ post.subcategory }}{% endif %}">Search</a></h5>
+                        <a class="btn" href="/search?q={{ query.q }}{% if query.category %}&amp;category={{ query.category }}{% endif %}{% if query.subcategory %}&amp;subcategory={{ query.subcategory }}{% endif %}">Run Search</a>
+                        <a class="btn" href=javascript:ShowDeleteButton('delete-confirm-{{ query.queryID }}');HideDeleteButton('delete-{{ query.queryID }}') id="delete-{{ query.queryID }}">Delete</a>
+                        <a class="btn" href="/search/memory?ID={{ query.queryID }}" id="delete-confirm-{{ query.queryID }}" style="display:none;">Confirm Delete</a>
 
-                        <p>{% if post.q %}
-                            Query : <strong>{{ post.q }}</strong>
-                            {% if post.q and post.category or post.subcategory %}<br />{% endif %}
+                        <p>{% if query.category %}
+                            Category : {{ gvalues.categories|cat_name:query.category }}
+                            {% if query.subcategory %}<br />{% endif %}
                         {% endif %}
-                        {% if post.category %}
-                            Category : <strong>{{ gvalues.categories|cat_name:post.category }}</strong>
-                            {% if post.subcategory %}<br />{% endif %}
-                        {% endif %}
-                        {% if post.subcategory %}
-                            Subcategory : <strong>{{ gvalues.subcategories|cat_name:post.subcategory }}</strong>
+                        {% if query.subcategory %}
+                            Subcategory : {{ gvalues.subcategories|cat_name:query.subcategory }}
                         {% endif %}
                         </p>
                     <div class="clear">&nbsp;</div>

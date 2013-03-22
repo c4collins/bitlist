@@ -21,6 +21,10 @@ form ul li {
     border: 1px solid #DDD;
 }
 
+.single-post p{
+    margin-bottom: 0px;
+}
+
 .single-post h2, .single-post h3, .single-post h4, .single-post h5{
     display:inline;
 } 
@@ -105,6 +109,10 @@ textarea {
 .navbar-search .btn {
     line-height: 16px;
     margin-top: 0px;
+}
+
+p.search-query{
+    border-bottom: groove 4px;
 }
 
 .query_categories{
