@@ -31,6 +31,14 @@ indexes:
 
 - kind: SavedQuery
   properties:
+  - name: category
+  - name: is_alert
+  - name: subcategory
+  - name: save_date
+    direction: desc
+
+- kind: SavedQuery
+  properties:
   - name: userID
   - name: is_alert
     direction: desc

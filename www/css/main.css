@@ -114,7 +114,6 @@ textarea {
 p.search-query{
     border-bottom: groove 4px;
 }
-
 .query_categories{
     display:inline-block;
 }
@@ -125,13 +124,8 @@ p.search-query{
     margin-bottom:0px;
     margin-left: 10px;
 }
-
-.enable_alert{
-    color:blue;
-}
-
-.disable_alert{
-    color:brown;
+.search-alert, .search-alert p.search-query {
+    border-color:chartreuse;
 }
 
 footer a{

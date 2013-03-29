@@ -198,6 +198,27 @@ class PostForm(webapp2.RequestHandler):
                                                     post.price ) )
         except search.Error:
             pass
+        
+        # Now that the post has been created or edited, and the index updated we are going to run all matching saved queries which are marked as alerts.
+        potential_matches = SavedQuery.query( SavedQuery.category == post.category, SavedQuery.subcategory == post.subcategory, SavedQuery.is_alert == True ).order( -SavedQuery.save_date )
+        for p_match in potential_matches:
+            # for each SavedQuery that has the same category and subcategory that is an alert search that query against this newest post.
+            query = p_match.q.replace(',',"")
+            query += " postID:%s" % post.postID
+
+            query_options = search.QueryOptions(
+                limit=bitsettings.search_per_page,
+                sort_options=None
+                )
+            query_obj = search.Query(query_string=query, options=query_options)
+            results = search.Index(name="posts").search(query=query_obj)
+            for result in results:
+                this_post = ndb.Key( urlsafe = result.doc_id ).get()
+
+
+                logging.info( "Email sent to: %s, regarding post: %s" % ( p_match.userID, this_post.postID) )
+
+
 
 
         self.redirect('/post?' + urllib.urlencode( {'postID' : post.postID } ) )
@@ -476,7 +497,7 @@ class SearchMemory(webapp2.RequestHandler):
     def get(self):
         if users.get_current_user():
             user = users.get_current_user()
-            user_id = user.user_id()
+            user_id = user.email()
             query_key = self.request.get('ID')
             match = ndb.Key(urlsafe=query_key).get()
             if match.userID == user_id:
@@ -500,8 +521,8 @@ class SearchMemory(webapp2.RequestHandler):
                                      is_alert = False,
                                             q = query,
                                      category = category,
-                                  subcategory = subcategory,
-                                         name = "" )
+                                  subcategory = subcategory
+                                   )
                 query_to_save.queryID = query_to_save.put().urlsafe()
                 query_to_save.put()
 
@@ -530,6 +551,7 @@ class SearchAlert(webapp2.RequestHandler):
 def CreatePostDocument(title, content, postID, category, subcategory, price):
     return search.Document(doc_id=postID,
         fields=[search.TextField( name='title'  , value=title ),
+                search.TextField( name='postID', value=postID ),
                 search.TextField( name='content', value=content ),
                 search.AtomField( name='category', value=category ),
                 search.AtomField( name='subcategory', value=subcategory ),

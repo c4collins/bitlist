@@ -1,11 +1,13 @@
-<div class="single-post">
+<div class="single-post{% if query.is_alert %} search-alert{% endif %}">
     {% if query.q %}<p class="search-query">
         {{ query.q }}
     </p>{% endif %}
-    {% if query.is_alert %}
-    <a class="btn disable_alert" href="/search/alert?q={{ query.queryID }}&amp;y=n">Disable Alert</a>
-    {% else %}
-    <a class="btn enable_alert" href="/search/alert?q={{ query.queryID }}">Save as Alert</a>
+    {% if query.q != "" and query.category != "" and query.subcategory != "" %}
+        {% if query.is_alert %}
+        <a class="btn" href="/search/alert?q={{ query.queryID }}&amp;y=n">Disable Alert</a>
+        {% else %}
+        <a class="btn" href="/search/alert?q={{ query.queryID }}">Save as Alert</a>
+        {% endif %}
     {% endif %}
     <a class="btn" href="/search?q={{ query.q }}{% if query.category %}&amp;category={{ query.category }}{% endif %}{% if query.subcategory %}&amp;subcategory={{ query.subcategory }}{% endif %}">Run Search</a>
     <a class="btn" href=javascript:ShowDeleteButton('delete-confirm-{{ query.queryID }}');HideDeleteButton('delete-{{ query.queryID }}') id="delete-{{ query.queryID }}">Delete</a>
