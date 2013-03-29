@@ -126,6 +126,14 @@ p.search-query{
     margin-left: 10px;
 }
 
+.enable_alert{
+    color:blue;
+}
+
+.disable_alert{
+    color:brown;
+}
+
 footer a{
     float:right;
 }

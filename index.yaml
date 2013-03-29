@@ -32,5 +32,13 @@ indexes:
 - kind: SavedQuery
   properties:
   - name: userID
+  - name: is_alert
+    direction: desc
+  - name: save_date
+    direction: desc
+
+- kind: SavedQuery
+  properties:
+  - name: userID
   - name: search_date
     direction: desc

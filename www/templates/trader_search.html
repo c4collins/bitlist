@@ -1,0 +1,23 @@
+<div class="single-post">
+    {% if query.q %}<p class="search-query">
+        {{ query.q }}
+    </p>{% endif %}
+    {% if query.is_alert %}
+    <a class="btn disable_alert" href="/search/alert?q={{ query.queryID }}&amp;y=n">Disable Alert</a>
+    {% else %}
+    <a class="btn enable_alert" href="/search/alert?q={{ query.queryID }}">Save as Alert</a>
+    {% endif %}
+    <a class="btn" href="/search?q={{ query.q }}{% if query.category %}&amp;category={{ query.category }}{% endif %}{% if query.subcategory %}&amp;subcategory={{ query.subcategory }}{% endif %}">Run Search</a>
+    <a class="btn" href=javascript:ShowDeleteButton('delete-confirm-{{ query.queryID }}');HideDeleteButton('delete-{{ query.queryID }}') id="delete-{{ query.queryID }}">Delete</a>
+    <a class="btn" href="/search/memory?ID={{ query.queryID }}" id="delete-confirm-{{ query.queryID }}" style="display:none;">Confirm Delete</a>
+
+    <p>{% if query.category %}
+        Category : {{ gvalues.categories|cat_name:query.category }}
+        {% if query.subcategory %}<br />{% endif %}
+    {% endif %}
+    {% if query.subcategory %}
+        Subcategory : {{ gvalues.subcategories|cat_name:query.subcategory }}
+    {% endif %}
+    </p>
+<div class="clear">&nbsp;</div>
+</div>

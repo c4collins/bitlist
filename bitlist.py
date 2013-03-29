@@ -16,7 +16,13 @@ register = template.register_template_library('tags.templatefilters')
 # These functions would otherwise be repeated in multiple classes.
 ##
 def get_category_list():
-    """Returns a list of the categories and subcategory combinations that currently have posts."""
+    """Returns a list of the categories and subcategory combinations that currently have posts.
+    This is used to populate the Browse section of the navigation, but is more complicated than necessary.
+    It could just generate a list from bitsettings categories/subcategories, but I like the idea of it being dynamic.
+    So it only loads Category/Subcategory combinations that contain a post.
+    However, it comes at the cost of a query, so a static list would be more efficient.    
+    This is taken care of via get_global_template_vars.
+    """
     category_list = []
     for category in bitsettings.categories:
         category_list.append( { 'nav': category['ID'], 
@@ -85,7 +91,8 @@ def get_email_text(email_name):
     """Retrieves the text of the email_name from the email_text.xml file.
     This would be extremely easy to make generic, but it hasn't been needed yet so it isn't.
     Use like get_email_text(email_name), where the email name is a string that matches one of the
-    emails in email_text.xml.  Of course, there's currently only one email, but that could easily change.
+    emails in email_text.xml.  
+    Of course, there's currently only one email, but that could easily change.
     """
     xml_path = os.path.join( os.path.dirname(__file__), 'xml/email_text.xml' )
     tree = ElementTree.parse(xml_path)
@@ -281,7 +288,7 @@ class TraderView(webapp2.RequestHandler):
                   
             template_values = {
             'gvalues': get_global_template_vars(self, user),
-            'saved_queries' : SavedQuery.query( SavedQuery.userID == user.user_id() ).order( -SavedQuery.search_date ),
+            'saved_queries' : SavedQuery.query( SavedQuery.userID == user.user_id() ).order( -SavedQuery.is_alert ).order( -SavedQuery.save_date ),
             'nickname' : user.nickname(),
             'user_id' : user.user_id(),
         }
@@ -399,7 +406,8 @@ class EmailReceived(InboundMailHandler):
 ##
 # SearchResults & SearchMemory
 # SearchResults handles the search page functions
-# SearchMemory handles the saved searches (and presumably the alerts)
+# SearchMemory handles the saved searches
+# SearchAlert handles the alerts (surprise!)
 ##
 
 class SearchResults(webapp2.RequestHandler):
@@ -410,6 +418,9 @@ class SearchResults(webapp2.RequestHandler):
             query = ""
 
         q=query ## The query is modified below, so q is the original query string
+
+        # GAE Search doesn't deal well with commas in search strings, not that they matter for search.
+        query = query.replace(',',"")
 
         if self.request.get('p'):
             cursor = search.Cursor(web_safe_string=self.request.get('p'))
@@ -486,6 +497,7 @@ class SearchMemory(webapp2.RequestHandler):
                 
                 query_to_save = SavedQuery()
                 query_to_save.populate(userID = user_id,
+                                     is_alert = False,
                                             q = query,
                                      category = category,
                                   subcategory = subcategory,
@@ -505,6 +517,12 @@ class SearchMemory(webapp2.RequestHandler):
         
             self.response.out.write( template.render( path, template_values ))
 
+class SearchAlert(webapp2.RequestHandler):
+    def get(self):
+        query = ndb.Key( urlsafe=self.request.get('q') ).get()
+        query.is_alert = False if self.request.get('y') == 'n' else True
+        query.put()
+        self.redirect('/trader')
 ##
 # Search Documents
 # https://developers.google.com/appengine/docs/python/search/overview
@@ -542,7 +560,9 @@ class SavedQuery(ndb.Model):
     category = ndb.StringProperty()
     subcategory = ndb.StringProperty()
     name = ndb.StringProperty()
+    save_date = ndb.DateTimeProperty(auto_now_add=True)
     search_date = ndb.DateTimeProperty(auto_now=True)
+    is_alert = ndb.BooleanProperty()
 
 
 ##
@@ -560,7 +580,8 @@ app = webapp2.WSGIApplication( [( '/'             , MainPage ),
                                 ( '/trader/posts' , TraderPostView ),
                                 ( '/category'     , CategoryView ),
                                 ( '/search'       , SearchResults ),                                
-                                ( '/search/memory', SearchMemory ),
+                                ( '/search/memory', SearchMemory ),                                
+                                ( '/search/alert' , SearchAlert ),
                                 ],
                             debug = True)
 
