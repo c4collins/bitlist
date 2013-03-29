@@ -7,6 +7,6 @@
     </email>
     <email name="Alert Notification">
         <header>A listing has been placed that matched your alert.</header>
-        <footer>You can reply to this message to contact the interested party directly.</footer>
+        <footer>You can reply to this message to contact the interested party directly or visit the post using the link above.</footer>
     </email>
 </data>

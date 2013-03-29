@@ -111,7 +111,7 @@ textarea {
     margin-top: 0px;
 }
 
-p.search-query{
+p.trader-short{
     border-bottom: groove 4px;
 }
 .query_categories{
@@ -124,7 +124,7 @@ p.search-query{
     margin-bottom:0px;
     margin-left: 10px;
 }
-.search-alert, .search-alert p.search-query {
+.search-alert, .search-alert p.trader-short {
     border-color:chartreuse;
 }
 

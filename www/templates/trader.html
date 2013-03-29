@@ -13,11 +13,14 @@
             <h3>Recent Posts</h3>
             {% for post in gvalues.trader_posts %}
                 <div class="single-post">
-                    <a href="/post?postID={{ post.postID }}"><h2>{{ post.title }}</h2></a>
                     <h5>{{ post.price|floatformat:3 }} BTC</h5>
+                    <p class="trader-short">
+                        <a href="/post?postID={{ post.postID }}">{{ post.title }}</a>
+                    </p>
                     <a class="btn" href="/post/edit?postID={{ post.postID }}">Edit</a>
                     <a class="btn" href=javascript:ShowDeleteButton('delete-confirm-{{ post.postID }}');HideDeleteButton('delete-{{ post.postID }}') id="delete-{{ post.postID }}">Delete</a>
                     <a class="btn" href="/post/edit/delete?postID={{ post.postID }}" id="delete-confirm-{{ post.postID }}" style="display:none;">Confirm Delete</a>
+                    <div class="clear">&nbsp;</div>
                 </div>
             {% endfor %}
             {% if gvalues.trader_posts|length < 1 %}
