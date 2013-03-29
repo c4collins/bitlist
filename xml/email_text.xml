@@ -3,6 +3,10 @@
 <data>
     <email name="Post Reply">
         <header>An interested buyer has replied to your post.</header>
-        <footer>You can reply to this message to contact the interested party directly.  Thanks for your participation!</footer>
+        <footer>You can reply to this message to contact the interested party directly.</footer>
+    </email>
+    <email name="Alert Notification">
+        <header>A listing has been placed that matched your alert.</header>
+        <footer>You can reply to this message to contact the interested party directly.</footer>
     </email>
 </data>

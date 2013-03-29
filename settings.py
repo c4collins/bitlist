@@ -10,6 +10,7 @@ site_url = 'bitcoinlist.appspot.com'
 email_local = "admin"
 email_suffix = 'bitcoinlist.appspotmail.com'
 email_subject = "Reply To:" # i.e. "Reply To: Acoustic Guitar - 10.00000000"
+alert_subject = "A recent listing has triggered your alert:" # i.e. "Reply To: PHP - Looking to Work - Web Design"
 
 # If changed here, the name should also be changed in: 
 # Site title in nav bar: nav.html   - <a class="brand">Bitcoin List</a>

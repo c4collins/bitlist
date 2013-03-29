@@ -217,9 +217,24 @@ class PostForm(webapp2.RequestHandler):
 
 
                 logging.info( "Email sent to: %s, regarding post: %s" % ( p_match.userID, this_post.postID) )
-
-
-
+                
+                recipient_address = p_match.userID
+                if mail.is_email_valid(recipient_address):
+                    post_url = bitsettings.site_url + "/post?postID=" + this_post.postID    
+                    ## get email from the email_text.xml file
+                    email = get_email_text("Alert Notification")
+                    # compose the body of the message being sent
+                    full_message = mail.EmailMessage(sender     = "%s <%s@%s>" % (bitsettings.site_name, bitsettings.email_local, bitsettings.email_suffix) ,
+                                                     subject    = "%s %s" % (bitsettings.alert_subject, p_match.q ) ,
+                                                     to         = "%s <%s>" % (p_match.userID.split('@')[0], p_match.userID) ,
+                                                     reply_to   = post.contact ,
+                                                     body       = email.find('header').text
+                                                     + "\n" + post.title
+                                                     + "\n" + post_url
+                                                     + "\n" + post.content
+                                                     + "\n\n" + email.find('footer').text ,
+                    )
+                    full_message.send()
 
         self.redirect('/post?' + urllib.urlencode( {'postID' : post.postID } ) )
 
@@ -309,7 +324,7 @@ class TraderView(webapp2.RequestHandler):
                   
             template_values = {
             'gvalues': get_global_template_vars(self, user),
-            'saved_queries' : SavedQuery.query( SavedQuery.userID == user.user_id() ).order( -SavedQuery.is_alert ).order( -SavedQuery.save_date ),
+            'saved_queries' : SavedQuery.query( SavedQuery.userID == user.email() ).order( -SavedQuery.is_alert ).order( -SavedQuery.save_date ),
             'nickname' : user.nickname(),
             'user_id' : user.user_id(),
         }
@@ -484,7 +499,7 @@ class SearchResults(webapp2.RequestHandler):
         template_values['date'] = datetime.datetime.now()
         try:
             template_values['next'] = results.cursor.web_safe_string
-            logging.info(template_values['next'])
+            ##logging.info(template_values['next'])
         except AttributeError:
             template_values['end'] = True
         template_values['query'] = q
@@ -497,7 +512,7 @@ class SearchMemory(webapp2.RequestHandler):
     def get(self):
         if users.get_current_user():
             user = users.get_current_user()
-            user_id = user.email()
+            user_id = str( user.email() )
             query_key = self.request.get('ID')
             match = ndb.Key(urlsafe=query_key).get()
             if match.userID == user_id:
@@ -508,7 +523,7 @@ class SearchMemory(webapp2.RequestHandler):
 
         if users.get_current_user():
             user = users.get_current_user()
-            user_id = user.user_id()
+            user_id = str( user.email() )
             
             query = self.request.get('q') if self.request.get('q') else ""
             category = self.request.get('category')
