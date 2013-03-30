@@ -3,7 +3,6 @@
 {% block content_container %}
     <div class="row">
         <div class="span12">            
-            <h6>UserID: {{ user_id }}</h6>
             <h1>{{ nickname }}</h1>
         </div>
     </div>
@@ -20,6 +19,8 @@
                     <a class="btn" href="/post/edit?postID={{ post.postID }}">Edit</a>
                     <a class="btn" href=javascript:ShowDeleteButton('delete-confirm-{{ post.postID }}');HideDeleteButton('delete-{{ post.postID }}') id="delete-{{ post.postID }}">Delete</a>
                     <a class="btn" href="/post/edit/delete?postID={{ post.postID }}" id="delete-confirm-{{ post.postID }}" style="display:none;">Confirm Delete</a>
+                    <p>Category : {{ gvalues.categories|cat_name:post.category }}</p>
+                    <p>Subcategory : {{ gvalues.subcategories|cat_name:post.subcategory }}</p>
                     <div class="clear">&nbsp;</div>
                 </div>
             {% endfor %}
